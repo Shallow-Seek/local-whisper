@@ -1,6 +1,6 @@
 # Contributing
 
-Bug fixes, new grammar backends, new engines, better docs. Here's how to get involved.
+Bug fixes, new transcription engines, grammar backends, mobile improvements, and better docs are welcome.
 
 ## Dev Setup
 
@@ -42,7 +42,7 @@ src/whisper_voice/
 ├── audio_processor.py     # VAD (+ hangover), noise reduction, adaptive gain
 ├── backup.py              # History persistence + disk-space guard
 ├── grammar.py             # Grammar backend factory wrapper
-├── transcriber.py         # Engine routing (+ reload() for timeout recovery)
+├── transcriber.py         # Engine routing
 ├── recovery.py            # processing.marker lifecycle
 ├── watchdog.py            # run_with_timeout per-stage wrapper
 ├── long_session.py        # Chunked long-session pipeline + JSONL persistence
@@ -74,8 +74,9 @@ src/whisper_voice/
 │   └── kokoro_tts.py      # Kokoro provider (MLX)
 ├── engines/
 │   ├── base.py            # TranscriptionEngine base
-│   ├── qwen3_asr.py       # Qwen3-ASR (default, MLX, low-confidence retry)
-│   └── whisperkit.py      # WhisperKit (alternative)
+│   ├── parakeet.py        # Parakeet-TDT v3 (default, MLX)
+│   ├── qwen3_asr.py       # Qwen3-ASR (MLX, English only)
+│   └── whisperkit.py      # WhisperKit (local server alternative)
 └── backends/
     ├── base.py            # Backend base
     ├── modes.py           # Transformation modes
@@ -108,6 +109,8 @@ LocalWhisperUI/Sources/LocalWhisperUI/
 
 Key constraint: **lazy loading**. Backends, engines, and models initialize only when selected. Non-selected components stay completely uninitialized. If your change touches initialization paths, verify startup memory footprint hasn't increased.
 
+Mobile lives in `src/flutter/local_whisper`. Flutter owns the shell, setup, history, modes, model management, settings, clipboard flow, and deterministic cleanup. Native iOS uses `ios/Runner/LocalSpeechBridge.swift` plus `ios/LocalWhisperKeyboard/`. Native Android uses `android/app/src/main/kotlin/info/gabrimatic/localwhisper/MainActivity.kt`, `LocalWhisperInputMethodService.kt`, and `AndroidManifest.xml`. Production Android still needs an Android-native offline ASR adapter before downloaded model families can transcribe.
+
 ## New Grammar Backend
 
 1. Create a folder under `src/whisper_voice/backends/<name>/` with `__init__.py` and `backend.py`.
@@ -139,6 +142,8 @@ See `tts/kokoro_tts.py` for the reference implementation.
 pytest tests/                           # full unit + integration suite
 pytest tests/test_flow.py -v            # end-to-end (requires a grammar backend)
 pytest -m integration -v                # only live-service integration tests
+cd LocalWhisperUI && swift build -c release
+cd src/flutter/local_whisper && flutter analyze && flutter test
 ```
 
 Manual verification flow:
@@ -169,7 +174,8 @@ If your change affects TTS, also test ⌥T on selected text.
 Use the [bug report template](https://github.com/gabrimatic/local-whisper/issues/new?template=bug_report.yml). Include:
 
 - Output of `wh version` and `wh status`
-- macOS version and chip (e.g., macOS 26.0, M4)
+- platform, OS version, and device/chip when relevant
+- selected transcription engine
 - Which grammar backend you're using
 - Steps to reproduce, expected vs. actual behavior
 - Relevant lines from `wh log` if the issue involves processing or crashes

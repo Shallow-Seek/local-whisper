@@ -9,7 +9,8 @@
 - [ ] New feature
 - [ ] Refactor
 - [ ] Documentation
-- [ ] New backend
+- [ ] New transcription engine or grammar backend
+- [ ] Mobile app change
 
 ## Test Plan
 
@@ -25,6 +26,7 @@ _List any changes to behavior, config, UI, or CLI. Write `None` if internal only
 
 - [ ] Tested end-to-end (record, transcribe, grammar correction)
 - [ ] README updated (if behavior changed)
+- [ ] `docs/mobile.md` or `docs/configuration.md` updated (if mobile/config behavior changed)
 - [ ] No breaking config changes (or migration notes below)
 - [ ] Lazy loading preserved (no eager backend/model initialization)
 

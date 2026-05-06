@@ -47,7 +47,7 @@ apple-intelligence = [
 wh = "whisper_voice:main"
 
 [project.urls]
-Homepage = "https://github.com/gabrimatic/local-whisper"
+Homepage = "https://gabrimatic.info"
 Repository = "https://github.com/gabrimatic/local-whisper"
 "Bug Tracker" = "https://github.com/gabrimatic/local-whisper/issues"
 Changelog = "https://github.com/gabrimatic/local-whisper/blob/main/CHANGELOG.md"

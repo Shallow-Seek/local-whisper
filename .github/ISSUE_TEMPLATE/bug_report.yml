@@ -7,7 +7,7 @@ body:
     attributes:
       label: Summary
       description: A single sentence describing what's broken.
-      placeholder: "Grammar correction returns empty text when using Apple Intelligence with long recordings."
+      placeholder: "Recording stops correctly, but the copied transcript is empty."
     validations:
       required: true
 
@@ -52,8 +52,37 @@ body:
   - type: input
     id: os
     attributes:
-      label: macOS version and chip
-      placeholder: "macOS 26.0, M4"
+      label: Platform and device
+      description: Include OS version, device, and chip when relevant.
+      placeholder: "macOS 26.0 on M4, iOS simulator, or Android emulator"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Surface
+      options:
+        - macOS app
+        - CLI
+        - Flutter iOS app
+        - Flutter Android app
+        - iOS keyboard
+        - Android input method
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Transcription engine
+      options:
+        - Parakeet-TDT v3
+        - Qwen3-ASR
+        - WhisperKit
+        - Mobile model pack
+        - Not sure
     validations:
       required: true
 
@@ -66,6 +95,7 @@ body:
         - Ollama
         - LM Studio
         - None (transcription only)
+        - Not applicable
     validations:
       required: true
 

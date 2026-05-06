@@ -4,11 +4,11 @@
 
 Privacy is a core constraint, not a feature toggle.
 
-- **All processing is local.** Recording, transcription, grammar correction, and text-to-speech happen entirely on your Mac.
-- **No network calls** except to localhost (WhisperKit on port 50060, Ollama on 11434, LM Studio on 1234).
-- **No telemetry, no analytics, no cloud.** Zero data leaves your machine.
-- **Audio stays on device.** Recordings save to `~/.whisper/` and are never transmitted.
-- **No outbound connections.** The app makes no internet requests at any point.
+- **Audio and transcript processing is local.** Recording, transcription, grammar correction, and text-to-speech run on-device or against localhost services after setup.
+- **Setup can use the network.** Setup, model downloads, `wh update`, and `wh doctor --fix` can fetch packages, models, or repository updates.
+- **No telemetry or analytics.** Local Whisper does not send usage analytics.
+- **Audio stays on device.** Recordings save to `~/.whisper/` and are not uploaded by the app.
+- **Local service boundaries.** WhisperKit uses localhost port 50060 when selected, Ollama uses 11434, and LM Studio uses 1234.
 
 ## Permissions
 
@@ -26,23 +26,25 @@ No other permissions. The app does not access contacts, location, camera, or any
 | Boundary | Trust Level | Notes |
 |----------|-------------|-------|
 | User audio | Trusted | Captured locally, stays on device |
-| WhisperKit server | Trusted | Runs on localhost if selected; not started by default |
+| Parakeet-TDT v3 | Trusted | Runs in-process through MLX |
+| Qwen3-ASR | Trusted | Runs in-process through MLX |
+| WhisperKit server | Trusted | Runs on localhost if selected |
 | Kokoro TTS | Trusted | In-process MLX, no network |
 | Grammar backends | Trusted | All run on localhost or on-device |
 | Config file (`~/.whisper/config.toml`) | Trusted | User-controlled, local filesystem |
 | Backup directory (`~/.whisper/`) | Trusted | Local, user-readable only |
 
-No remote trust boundaries. No authentication, no API keys, no external service dependencies.
+Runtime audio/transcript processing has no cloud trust boundary. Install and update paths can contact package, model, or repository hosts.
 
 ## Audio Lifecycle
 
 1. Recording is captured to a temporary WAV file in `~/.whisper/`
-2. Audio is passed to the transcription engine (Qwen3-ASR in-process by default, or WhisperKit on localhost if selected)
+2. Audio is passed to the transcription engine (Parakeet-TDT v3 in-process by default, Qwen3-ASR in-process if selected, or WhisperKit on localhost if selected)
 3. Transcription text is sent to the selected grammar backend (if enabled)
 4. Result is copied to clipboard (or pasted at cursor if auto-paste is enabled)
 5. Audio is retained in `~/.whisper/` for backup
 
-At no point does audio or text leave the local machine.
+After setup and model installation, audio and transcript text stay on the local machine or localhost services.
 
 ## Vulnerability Reporting
 
@@ -71,7 +73,6 @@ These are not considered vulnerabilities:
 
 | Version | Supported |
 |---------|-----------|
-| 1.3.x   | Yes       |
-| 1.2.x   | Yes       |
-| 1.1.x   | Yes       |
-| 1.0.x   | Yes       |
+| 1.6.x   | Yes       |
+| 1.5.x   | Security fixes only |
+| Older   | No        |
