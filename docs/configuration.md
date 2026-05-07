@@ -2,7 +2,7 @@
 
 Local Whisper stores settings in `~/.whisper/config.toml`.
 
-This file is the full config reference. Most users should change settings from the app or with `wh config`; edit the TOML directly only when you need manual control.
+This is the full config reference. Change most settings from the app or with `wh config`; edit the TOML directly when you need manual control.
 
 ## Full Reference
 

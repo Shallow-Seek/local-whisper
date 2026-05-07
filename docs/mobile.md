@@ -1,8 +1,8 @@
 # Mobile Apps
 
-The Flutter mobile app lives in `src/flutter/local_whisper`. Mobile is the app plus the keyboard.
+The Flutter app is Local Whisper's mobile speech-to-text surface. It gives iOS and Android the recorder app, local model packs, searchable history, modes, and a native keyboard for text fields.
 
-Record in the app, keep local model packs and searchable history on the device, and use modes to shape the finished text. The native keyboard on iOS and the native input method on Android bring Local Whisper actions into other text fields.
+Record in the app, keep local data on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
 
 iOS transcribes locally today with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`. Parakeet-TDT v3 INT8 ONNX is the recommended Android pack; Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack.
 
@@ -31,7 +31,7 @@ First launch shows setup before the tab shell:
 4. Keyboard setup and practice
 5. Finish
 
-The setup can be replayed from Settings. The progress indicator is read-only; users move with explicit actions. Optional model choices open in place instead of sending the user to another tab.
+Replay setup from Settings. The progress indicator is read-only; move with explicit actions. Optional model choices open in place instead of sending you to another tab.
 
 <p align="center">
   <img src="../assets/ios-setup-settings.png" width="760" alt="Local Whisper iOS setup and settings screens">
@@ -77,7 +77,7 @@ Android debug QA can seed the recommended pack and interaction data:
 flutter run --dart-define=LOCAL_WHISPER_QA_SEED=true
 ```
 
-Android can request microphone permission, record local WAV audio, show levels, store local data, verify the native input method, and transcribe with the installed sherpa-onnx model pack. Debug QA still seeds interaction state so the app and keyboard flow can be exercised without downloading a large model during every emulator pass.
+Android requests microphone permission, records local WAV audio, shows levels, stores local data, verifies the native input method, and transcribes with the installed sherpa-onnx model pack. Debug QA seeds interaction state so emulator passes can exercise the app and keyboard flow without downloading a large model each time.
 
 ## Checks
 

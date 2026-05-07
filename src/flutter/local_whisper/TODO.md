@@ -34,7 +34,7 @@ This checklist defines the publish-grade iOS Flutter app scope.
 - [x] Built-in Clean, Message, Notes, and Prompt modes.
 - [x] Editable custom modes.
 - [ ] Mode sync with keyboard quick actions through App Group storage.
-- [ ] User vocabulary and replacements.
+- [ ] Custom vocabulary and replacements.
 - [ ] Per-mode formatting preview.
 
 ## Keyboard Extension

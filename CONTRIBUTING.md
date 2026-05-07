@@ -1,8 +1,8 @@
 # Contributing
 
-Bug fixes, new transcription engines, grammar backends, mobile improvements, and better docs are welcome.
+Contribute focused fixes, transcription engines, grammar backends, mobile improvements, and documentation updates.
 
-## Dev Setup
+## Development Setup
 
 ```bash
 git clone https://github.com/gabrimatic/local-whisper.git
@@ -13,7 +13,7 @@ pip install -e .
 wh build   # builds the Swift UI app
 ```
 
-Run the service for development:
+Run the service:
 
 ```bash
 wh start
@@ -107,9 +107,9 @@ LocalWhisperUI/Sources/LocalWhisperUI/
 └── Constants.swift                      # App-wide constants
 ```
 
-Key constraint: **lazy loading**. Backends, engines, and models initialize only when selected. Non-selected components stay completely uninitialized. If your change touches initialization paths, verify startup memory footprint hasn't increased.
+Key constraint: **lazy loading**. Backends, engines, and models initialize only when selected. Non-selected components stay uninitialized. If your change touches initialization paths, verify startup memory footprint has not increased.
 
-Mobile lives in `src/flutter/local_whisper`. Flutter owns the shell, setup, history, modes, model management, settings, clipboard flow, and deterministic cleanup. Native iOS uses `ios/Runner/LocalSpeechBridge.swift` plus `ios/LocalWhisperKeyboard/`. Native Android uses `android/app/src/main/kotlin/info/gabrimatic/localwhisper/MainActivity.kt`, `LocalWhisperInputMethodService.kt`, and `AndroidManifest.xml`. Production Android still needs an Android-native offline ASR adapter before downloaded model families can transcribe.
+Mobile lives in `src/flutter/local_whisper`. Flutter owns the shell, setup, history, modes, model management, settings, clipboard flow, and deterministic cleanup. Native iOS uses `ios/Runner/LocalSpeechBridge.swift` plus `ios/LocalWhisperKeyboard/`. Native Android uses `MainActivity.kt`, `LocalWhisperInputMethodService.kt`, `AndroidManifest.xml`, and Flutter-side sherpa-onnx transcription in `lib/src/sherpa_speech_service.dart`.
 
 ## New Grammar Backend
 
@@ -163,7 +163,7 @@ If your change affects TTS, also test ⌥T on selected text.
 
 - One feature or fix per PR. Keep scope tight.
 - Test end-to-end before opening.
-- Update `README.md` if user-facing behavior changes.
+- Update `README.md` if visible behavior changes.
 - No breaking config changes without migration notes in the PR description.
 - Match existing code style. No reformatting unrelated files.
 - Preserve lazy loading. Eager backend/model initialization gets flagged in review.
@@ -174,9 +174,9 @@ If your change affects TTS, also test ⌥T on selected text.
 Use the [bug report template](https://github.com/gabrimatic/local-whisper/issues/new?template=bug_report.yml). Include:
 
 - Output of `wh version` and `wh status`
-- platform, OS version, and device/chip when relevant
+- Platform, OS version, and device/chip when relevant
 - selected transcription engine
-- Which grammar backend you're using
+- grammar backend in use
 - Steps to reproduce, expected vs. actual behavior
 - Relevant lines from `wh log` if the issue involves processing or crashes
 

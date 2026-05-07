@@ -1,10 +1,10 @@
 # Local Whisper
 
-Flutter mobile implementation of Local Whisper for iOS and Android.
+This Flutter app is the mobile speech-to-text implementation of Local Whisper for iOS and Android.
 
-Mobile is the app plus the keyboard. Record in the app, keep local model packs and history on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other text fields.
+Mobile is both the recorder app and the keyboard. Record in the app, keep local model packs and history on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
 
-iOS records with `AVAudioEngine` and transcribes locally with WhisperKit/Core ML. Android records 16 kHz mono WAV audio, transcribes on-device with `sherpa_onnx`, and owns the native input method and setup path. There is no Apple Speech framework path and no cloud fallback.
+iOS records with `AVAudioEngine` and transcribes locally with WhisperKit/Core ML. Android records 16 kHz mono WAV audio, transcribes on-device with `sherpa_onnx`, and owns the native input method and setup path. There is no Apple Speech framework path and no cloud speech fallback.
 
 ## Run
 
@@ -38,10 +38,10 @@ flutter build apk --debug --dart-define=LOCAL_WHISPER_QA_SEED=true
 
 1. On first launch, hold the shell behind a branded loading state until stored setup state is known.
 2. Run the full-screen setup flow: welcome, inline model-pack install, microphone permission, keyboard/input-method handoff, and practice.
-3. Open the platform settings page for keyboard setup and app permissions when the user asks, then let the user verify the keyboard by switching to Local Whisper Keyboard in the practice field and tapping Verify on the keyboard/input method.
+3. Open the platform settings page for keyboard setup and app permissions on request, then verify the keyboard by switching to Local Whisper Keyboard in the practice field and tapping Verify on the keyboard/input method.
 4. Check the selected local model state before requesting microphone permission.
 5. Start native recording through the platform bridge.
-6. Stop recording and transcribe the file with the selected wired local engine where that production runtime exists.
+6. Stop recording and transcribe the file with the selected local engine.
 7. Return the raw transcript to Flutter.
 8. Apply local cleanup and the selected dictation mode.
 9. Copy the result, show it in the app, and save searchable local history.
@@ -72,9 +72,9 @@ WhisperKit Large v3 is wired for iOS transcription today. Parakeet-TDT v3 INT8 O
 
 - First-run setup is linear and repeatable from Settings.
 - Setup does not allow step jumping from the progress indicator.
-- The keyboard step opens platform settings, explains the keyboard path, verifies through a real token inserted by the keyboard/input method, and supports finishing without the keyboard when the user chooses that path.
+- The keyboard step opens platform settings, explains the keyboard path, verifies through a real token inserted by the keyboard/input method, and supports finishing without the keyboard when you choose that path.
 - Record keeps the primary action obvious: `Start talking` begins recording when the selected platform model is installed; `Install model` opens Models when it is not. Recording shows elapsed time, a stop button, and the level meter.
-- Settings groups powerful controls into focused sections for status, recording, cleanup, keyboard behavior, privacy, and onboarding replay.
+- Settings groups advanced controls into focused sections for status, recording, cleanup, keyboard behavior, privacy, and onboarding replay.
 
 ## Android Notes
 
@@ -100,5 +100,5 @@ WhisperKit Large v3 is wired for iOS transcription today. Parakeet-TDT v3 INT8 O
 - Missing installed model files.
 - Corrupt or incomplete installed model files.
 - Partial model download cleanup.
-- User-canceled model downloads.
+- Canceled model downloads.
 - Copy/retry from history.

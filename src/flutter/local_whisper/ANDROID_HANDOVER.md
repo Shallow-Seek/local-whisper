@@ -1,6 +1,6 @@
 # Android Handover
 
-This file captures the Flutter iOS implementation state so Android can follow the same product contract without re-discovering the work.
+This file captures the mobile product contract so iOS and Android keep the same offline speech-to-text behavior.
 
 ## Current Flutter Surface
 
@@ -19,30 +19,30 @@ The app has five tabs: `Record`, `History`, `Modes`, `Models`, and `Settings`.
 
 - First launch shows setup before the tab shell, with no flash of Home/Record underneath.
 - Setup is linear: welcome, recommended model install, microphone permission, keyboard setup/practice, finish.
-- Setup can be replayed from Settings.
-- The setup progress indicator is read-only. Users move with explicit actions, not by tapping step chips.
-- Model install should be simple on the surface but still expose choices. The recommended WhisperKit pack is inline; more packs live in an in-place chooser.
+- Replay setup from Settings.
+- Keep the setup progress indicator read-only. Move with explicit actions, not by tapping step chips.
+- Keep model install simple on the surface while still exposing choices. The recommended pack is inline: WhisperKit on iOS, Parakeet-TDT v3 INT8 ONNX on Android. More packs live in an in-place chooser.
 - Record must never be ambiguous:
   - If the selected recording model is installed, the primary action is `Start talking`.
   - If the selected recording model is missing, the primary action is `Install model` and opens Models.
   - While recording, show `Listening`, `Speak now`, elapsed time, a stop button, cancel, and a level meter.
   - While processing, show `Working locally` and `Transcribing and formatting offline`.
-- No cloud fallback. Recording and cleanup remain local.
-- Missing model files, corrupt installs, permission denial, duplicate taps, app backgrounding, short recordings, empty transcripts, and canceled downloads must have clear user-facing states.
+- No cloud speech fallback. Recording, transcription, and cleanup remain local after model downloads.
+- Missing model files, corrupt installs, permission denial, duplicate taps, app backgrounding, short recordings, empty transcripts, and canceled downloads must have clear visible states.
 
 ## Keyboard Extension Behavior To Mirror
 
 iOS has a native keyboard extension at `ios/LocalWhisperKeyboard`.
 
-The setup flow does not silently enable the keyboard because iOS requires the user to add third-party keyboards in Settings. The containing app opens its own Settings page and verifies the keyboard by asking the user to switch to Local Whisper Keyboard in a practice field and tap `Verify`.
+The setup flow does not silently enable the keyboard because iOS requires third-party keyboards to be added in Settings. The containing app opens its own Settings page and verifies the keyboard by asking you to switch to Local Whisper Keyboard in a practice field and tap `Verify`.
 
-Android should provide the equivalent guided path for enabling the input method:
+Android provides the equivalent guided path for enabling the input method:
 
 - Explain the exact enable/select steps in-app.
 - Offer direct Android settings intents where supported.
 - Return to an in-app practice field.
 - Verify that the keyboard/input method is active through a real insert/action, not only a checkbox.
-- Keep a clear fallback when the user chooses not to enable the keyboard.
+- Keep a clear fallback when you choose not to enable the keyboard.
 
 ## Native Work Already Done On iOS
 
@@ -107,4 +107,4 @@ The latest manual screenshots were captured under `/tmp` on the development mach
 - `/tmp/local-whisper-keyboard-final-after-verify.png`
 - `/tmp/local-whisper-keyboard-scroll-before.png`
 
-These are not source artifacts, but they document the final iOS visual states that Android should match conceptually.
+These are not source artifacts. They document the final iOS visual states that Android matches conceptually.

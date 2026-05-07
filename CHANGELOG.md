@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+This changelog tracks notable project changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
@@ -9,20 +9,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Fixed
 
 - **Fresh installs now get ffmpeg.** Parakeet-TDT (the default transcription engine since 1.5.0) shells out to `ffmpeg` for audio decoding, but `setup.sh` only installed `espeak-ng`. A clean machine would hit a cryptic "ffmpeg not installed" error on the first transcription. `setup.sh`, the Homebrew formula, and `wh doctor --fix` now install ffmpeg alongside espeak-ng.
-- **Overlay pill is now visible over fullscreen apps.** The pill's window level was too low for an accessory app, so fullscreen windows sometimes occluded it — switching spaces was the only way to see the recording state. The overlay now sits at the screen-saver level while still keeping the menu bar accessible.
+- **Overlay pill is now visible over fullscreen apps.** The pill's window level was too low for an accessory app, so fullscreen windows sometimes occluded it; switching spaces was the only way to see the recording state. The overlay now sits at the screen-saver level while still keeping the menu bar accessible.
 - **Overlay no longer drifts to the left edge on certain displays.** Positioning now picks the screen under the cursor (falling back to the main screen, then the first screen) and skips the move entirely if the chosen display reports a degenerate frame during sleep/wake or hot-plug. The one-off "pill jumped to the left side" glitch traced to `NSScreen.main` returning a secondary display on the logical left of the primary.
 
 ## [1.6.0] - 2026-04-20
 
 ### Added
 
-- **Inline download progress bars.** Switching to an un-downloaded engine or turning on Text-to-Speech now shows a real progress bar with megabytes, total, and percent under the triggering section, driven by an actual byte count polled from the HF cache directory. No modal dialogs and no overlay takeover — the bar lives inside the card that started the download.
+- **Inline download progress bars.** Switching to an un-downloaded engine or turning on Text-to-Speech now shows a real progress bar with megabytes, total, and percent under the triggering section, driven by a byte count polled from the HF cache directory. No modal dialogs and no overlay takeover; the bar lives inside the card that started the download.
 - **Merged "Speech-to-text model" panel.** Transcription settings now show one card per engine that acts as both the picker and the status readout. Active card is accent-tinted with an "In use" marker; inactive cards offer Use, Use & download, or trash in place. The previous separate engine picker has been retired. Per-engine tuning knobs render below the active card.
 - **Eager Kokoro preload.** Flipping Text-to-Speech on immediately downloads the Kokoro voice model with visible progress instead of deferring to the first ⌥T press. First speak after enabling is instant.
 
 ### Fixed
 
-- **Engine switching now works even when a model is not yet on disk.** The LaunchAgent plist no longer hard-pins `HF_HUB_OFFLINE=1`, and the running service clears any stale value on startup, so switching to a fresh engine mid-session can actually download its weights. Previous versions failed with a generic "Switch failed" on the first attempt.
+- **Engine switching now works even when a model is not yet on disk.** The LaunchAgent plist no longer hard-pins `HF_HUB_OFFLINE=1`, and the running service clears any stale value on startup, so switching to a fresh engine mid-session downloads its weights. Previous versions failed with a generic "Switch failed" on the first attempt.
 - **Text-to-Speech toggle no longer only flips the config.** Turning TTS off from the menu bar or Settings tears down the processor and unbinds ⌥T; turning it on now spins them up without a service restart. Toggle state in the UI matches reality.
 - **Clearer error messages** when a download fails: offline / network failures surface as "needs internet" or "network error" instead of raw exception text.
 
@@ -30,7 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Parakeet-TDT v3 is the new default transcription engine.** NVIDIA's Parakeet-TDT-0.6B-v3 tops the HuggingFace Open ASR Leaderboard and beats Whisper-large-v3 and every 1.1B Parakeet variant. It runs fully in-process via [parakeet-mlx](https://github.com/senstella/parakeet-mlx), supports English plus 24 European languages, and handles long audio through overlapping 120s chunks. Qwen3-ASR remains available for English-only workflows via `wh engine qwen3_asr`; WhisperKit remains available as a third option.
+- **Parakeet-TDT v3 is the new default transcription engine.** NVIDIA's Parakeet-TDT-0.6B-v3 ships as the default because it is accurate, multilingual, and practical on Apple Silicon. It runs in-process via [parakeet-mlx](https://github.com/senstella/parakeet-mlx), supports English plus 24 European languages, and handles long audio through overlapping 120s chunks. Qwen3-ASR remains available for English-only workflows via `wh engine qwen3_asr`; WhisperKit remains available as a third option.
 - **Parakeet settings panel** in Transcription exposing model, chunking (`chunk_duration`, `overlap_duration`), decoding strategy (`greedy` / `beam`), beam tuning (`beam_size`, `length_penalty`, `patience`, `duration_reward`), timeout, and local-attention mode with adjustable context size.
 - **`setup.sh`, `wh doctor`, and `wh update` are now engine-aware.** Only the currently-selected transcription engine's model is downloaded and warmed. Fresh installs pull Parakeet-TDT v3 (~600 MB). Switching to Qwen3-ASR later lazy-loads that model on the engine's first call; neither engine holds RAM when the other is active. Warm-up compiles the MLX graph so first inference is fast. It does not pin the model in memory.
 - Dedicated warm-up sentinels at `~/.whisper/models/.parakeet_v3_warmed` and `~/.whisper/models/.qwen3_warmed` so re-running setup skips the one-time graph compile.
@@ -61,11 +61,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Crash-recovery pipeline**: the service writes a marker at `~/.whisper/processing.marker` before heavy work and clears it on completion. On boot the service replays any interrupted transcription in the background and surfaces a `Recovered transcription` notification. A forced restart, panic, or power loss no longer silently drops a recording.
 - **Chunked long-session pipeline**: recordings longer than five minutes run through a dedicated pipeline that transcribes, grammar-corrects and persists each VAD segment to `~/.whisper/current_session.jsonl` before the next segment. If the service crashes mid-lecture, whatever chunks completed are committed as a `[Interrupted]`-tagged history entry on the next boot instead of vanishing.
 - **Pipeline watchdog**: per-stage timeouts (transcribe 20 min, grammar 90 s, paste 8 s) prevent a single wedged backend from freezing the service. On a transcription timeout the engine is force-reloaded to clear any half-committed MLX/decoder state.
-- **LaunchAgent self-healing**: the plist now uses `KeepAlive={SuccessfulExit=false}` with a 10-second `ThrottleInterval` and 30-second `ExitTimeOut`, plus a separate `service.err.log`. Crashes auto-restart; clean stops don't. User-error exits (mic permission denied) exit 0 so launchd does not hot-loop.
-- **Sleep/wake resilience**: the Swift app observes `NSWorkspace.didWakeNotification` and sends a `resync_audio` IPC action on wake. The service also runs a 60-second audio-monitor heartbeat so a dead CoreAudio stream from sleep/wake or a mic swap is reaped and rebuilt without user action.
+- **LaunchAgent self-healing**: the plist now uses `KeepAlive={SuccessfulExit=false}` with a 10-second `ThrottleInterval` and 30-second `ExitTimeOut`, plus a separate `service.err.log`. Crashes auto-restart; clean stops don't. Expected permission exits (mic permission denied) exit 0 so launchd does not hot-loop.
+- **Sleep/wake resilience**: the Swift app observes `NSWorkspace.didWakeNotification` and sends a `resync_audio` IPC action on wake. The service also runs a 60-second audio-monitor heartbeat so a dead CoreAudio stream from sleep/wake or a mic swap is reaped and rebuilt without manual action.
 - **Quieter-voice support**: VAD now adds a 210 ms trailing-edge hangover so soft word tails aren't clipped, and normalization adds an adaptive second-stage gain (up to +16 dB total, clip-guarded) for recordings that the primary 10 dB cap can't raise to a usable level.
-- **Low-confidence transcription retry**: when Qwen3-ASR returns an empty result on a short clip, the engine retries once with `temperature=0.2`, `top_p=0.95` before returning "No speech" — avoiding the common case where greedy decoding gets stuck on valid audio.
-- **Expanded `wh status`**: shows uptime, RSS, and any pending recovery work (interrupted transcriptions, partial long sessions) so users can see why the service just did something at boot.
+- **Low-confidence transcription retry**: when Qwen3-ASR returns an empty result on a short clip, the engine retries once with `temperature=0.2`, `top_p=0.95` before returning "No speech"; this avoids the common case where greedy decoding gets stuck on valid audio.
+- **Expanded `wh status`**: shows uptime, RSS, and any pending recovery work (interrupted transcriptions, partial long sessions) so you can see why the service did something at boot.
 - **Voice dictation commands**: speak "new line", "new paragraph", "period", "comma", "question mark", "exclamation mark", "colon", "semicolon", "dash", "scratch that", and more, and Local Whisper replaces the phrase with the literal punctuation or whitespace. Runs before grammar correction so the grammar pass sees well-punctuated sentences. Toggle in `~/.whisper/config.toml` under `[dictation]`; add custom commands under `[dictation.commands]`.
 - **`wh export`** writes the full transcription history to Markdown, plain text, or JSON in one command. Defaults: `~/Desktop/local-whisper-history.md`. Supports `--format`, `--out`, and `--limit`.
 - **`wh stats`** prints local usage statistics: total sessions, total words and characters, average words per session, counts for today/7d/30d, first and last session timestamps, top words (stopwords filtered), and top replacement rules triggered.
@@ -74,7 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- Toggling "Enable grammar correction" in Settings now actually loads or unloads the backend in-process instead of only writing the flag to config and leaving the model dangling.
+- Toggling "Enable grammar correction" in Settings now loads or unloads the backend in-process instead of only writing the flag to config and leaving the model dangling.
 - `⌥T` text-to-speech no longer clobbers the clipboard when it falls back to Cmd+C for text selection. The prior clipboard contents are saved and restored.
 - Dead icon constants (`ICON_*`, `OVERLAY_WAVE_FRAMES`, `ANIM_INTERVAL_*`) and the dead `hide_dock_icon()` helper in `utils.py` removed. Asset imports no longer hard-crash the entire CLI if a single bundled PNG is missing.
 - WhisperKit engine no longer accumulates `atexit` handlers across engine switches, and now fails fast if the server subprocess dies during startup instead of polling a dead PID for five minutes.
@@ -83,12 +83,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `wh listen` now re-arms the pre-recording monitor stream when it finishes, so a subsequent hotkey capture still gets the configured pre-buffer.
 - `wh update` aborts cleanly when `git pull` or `pip install` fails and prints the exact rollback command (`git reset --hard <sha>`) so the service never restarts against half-applied changes.
 - `wh config show` piped into another command now exits non-zero when the config file is missing instead of silently succeeding.
-- `wh uninstall` waits up to two seconds for graceful SIGTERM shutdown before escalating to SIGKILL, and surfaces the source-install venv path so users know exactly what remains to clean up.
+- `wh uninstall` waits up to two seconds for graceful SIGTERM shutdown before escalating to SIGKILL, and surfaces the source-install venv path so you know exactly what remains to clean up.
 - `wh doctor --fix` reports a real failure if `launchctl load` returns non-zero instead of printing "loaded" regardless.
 - Ollama model list fetch in Advanced settings now uses a 5-second timeout so a stopped Ollama server no longer hangs the button indefinitely.
 - About tab no longer force-unwraps credit URLs; a malformed string silently no-ops instead of crashing.
 - `DeferredTextField`, `DeferredIntTextField`, and `DeferredTextEditor` now pick up external `config_snapshot` updates when the field is unfocused, so settings no longer appear stale after a backend or engine switch.
-- `DeferredIntTextField` resets to the last committed value when the user leaves a non-parseable value in the field (previously it stayed diverged from the service indefinitely).
+- `DeferredIntTextField` resets to the last committed value when you leave a non-parseable value in the field (previously it stayed diverged from the service indefinitely).
 - `audio_processor._istft` uses an explicit `raise` instead of `assert` so its STFT overlap invariant holds under `python -O`.
 
 ### Changed
@@ -131,7 +131,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Settings window with native macOS grouped forms across three tabs (General, Advanced, About).
 - Real-time status updates in the menu bar and overlay during recording, processing, and transcription.
 - Keyboard shortcuts in the menu bar: Cmd+R to retry, Cmd+Shift+C to copy last result, Cmd+, for settings, Cmd+Q to quit.
-- Qwen3-ASR bf16 model (full precision) as the default for maximum transcription quality.
+- Qwen3-ASR bf16 model (full precision) as the default transcription model.
 - Language auto-detection for Qwen3-ASR.
 - Model warm-up during setup so the first transcription starts without delay.
 - Ollama model list fetched live in settings (pulls installed models automatically).
@@ -140,7 +140,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- Default Qwen3-ASR model is the 1.7B-bf16 variant for maximum transcription quality.
+- Default Qwen3-ASR model is the 1.7B-bf16 variant.
 - WhisperKit is an optional engine. Install manually with `brew install whisperkit-cli` if needed.
 - Text fields in settings save on Enter or focus loss instead of on every keystroke.
 - Repetition penalty (1.2) added to Qwen3-ASR to reduce hallucination on short or silent recordings.
@@ -165,7 +165,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Qwen3-ASR is the default transcription engine. New installs use it out of the box; the engine is configurable via config or Settings.
 - Long recordings (over 28 seconds) are only split into segments when using WhisperKit. Qwen3-ASR handles them as a single pass.
 - Completion notifications are now off by default.
-- Settings window reorganized from 6 tabs to 3 (General, Advanced, About). Everyday options in General, power-user tuning in Advanced.
+- Settings window reorganized from 6 tabs to 3 (General, Advanced, About). Everyday options in General, advanced tuning in Advanced.
 - Menu bar cleaned up: "Audio Files" renamed to "Recordings", "Backups" and "Config" items removed (redundant with in-app alternatives).
 - Settings window now reliably opens over fullscreen apps.
 
@@ -220,7 +220,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### 2026-02-18
 
-- Microphone permission check with user-friendly error on startup
+- Microphone permission check with clear error on startup
 - Silent audio detection to skip empty recordings
 
 ### 2026-01-30
@@ -235,7 +235,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Enhanced session management with error handling and retry logic
 
-### 2026-01-22 – 2026-01-24
+### 2026-01-22 to 2026-01-24
 
 - Refactored entire codebase from "proofreading" to "grammar correction" terminology
 - Switched grammar backends to proofreading-only mode (no creative rewriting)

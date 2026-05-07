@@ -6,19 +6,17 @@
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11--3.12-blue.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-no%20cloud-green.svg)]()
 
-Local Whisper is a local, no-cloud voice stack for macOS, iOS, and Android.
+Local Whisper is an offline speech-to-text app and local dictation service for macOS, iOS, and Android. It is for people who dictate into real apps: press a shortcut anywhere on macOS, speak, and get cleaned text copied or pasted without sending audio to a hosted API.
 
-On macOS, press a global shortcut anywhere, speak, and get cleaned text on your clipboard.
+On mobile, Local Whisper is both the recorder app and the native keyboard. Record in the app, keep local model packs and history on the device, then use the keyboard to bring modes, punctuation, and Local Whisper actions into other text fields.
 
-On mobile, Local Whisper is the app plus the keyboard. Record in the app, keep local model packs and history on the device, then use the keyboard to bring modes, punctuation, and Local Whisper actions into other text fields.
+iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`: Parakeet-TDT v3 INT8 ONNX is the default Android pack, and Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack. There is no cloud speech fallback.
 
-iOS transcribes locally today with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`: Parakeet-TDT v3 INT8 ONNX is the default Android pack, and Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack. No cloud fallback is planned.
+Download the models once; run them locally after that. Built-in runtime paths stay on-device or localhost. Configure LM Studio with a private LAN server when you need that setup. No hosted speech API. No account. No telemetry. No transcript upload.
 
-The built-in runtime paths stay on-device or localhost after model downloads. LM Studio can use a private LAN server if you configure one. No hosted speech API. No account. No telemetry. No transcript upload.
+Double-tap Right Option from any app to start recording, tap Right Option or Space to stop, and press Esc to cancel.
 
-The macOS background service handles system-wide push-to-talk dictation. Double-tap Right Option from any app to start recording, tap Right Option or Space to stop, and press Esc to cancel.
-
-The menu bar is the control surface: status, engine and grammar switching, history, settings, updates, and service controls.
+Use the menu bar for status, engine and grammar switching, history, settings, updates, and service controls.
 
 Parakeet-TDT v3 is the default offline speech-to-text engine on macOS.
 
@@ -28,7 +26,7 @@ Parakeet-TDT v3 is the default offline speech-to-text engine on macOS.
 
 ## Offline By Design
 
-Local Whisper uses the network for setup, model downloads, and updates. Runtime audio and transcript processing stays on-device, localhost, or a private LAN server you configure; it does not use hosted speech APIs.
+Local Whisper uses the network for setup, model downloads, and updates. After that, audio and transcript processing stays on-device, localhost, or a private LAN server you configure. It does not use hosted speech APIs.
 
 | Runtime path | Where it runs |
 |--------------|---------------|
@@ -42,7 +40,7 @@ Local Whisper uses the network for setup, model downloads, and updates. Runtime 
 
 ## At a Glance
 
-Local Whisper is for system-wide dictation, not a single web text box. Start recording with a global shortcut on macOS, clean the transcript locally, paste into any app, replay history, and use the mobile app plus keyboard for the same private workflow on iOS and Android.
+Local Whisper is speech-to-text for the places you already type. Start recording with a global shortcut on macOS, clean the transcript locally, paste into any app, replay history, and use the mobile recorder app plus native keyboard for the same private workflow on iOS and Android.
 
 | Surface | Runtime scope | Status |
 |---------|---------------|--------|
@@ -78,7 +76,7 @@ The setup script installs dependencies, downloads and warms the active local tra
 
 ---
 
-## What It Does
+## Features
 
 - **Global dictation hotkey**: start recording from any app without focusing a Local Whisper window. Stop with Right Option or Space; the final text lands on the clipboard or pastes at the cursor.
 - **Offline transcription** via in-process MLX for Parakeet-TDT v3 and Qwen3-ASR. WhisperKit is available through a local server.
@@ -91,7 +89,7 @@ The setup script installs dependencies, downloads and warms the active local tra
 - **Native macOS UI**: menu bar status/control, floating overlay, and settings window.
 - **Mobile app and keyboards**: iOS and Android include the Flutter app plus native keyboard surfaces. Mobile manages local model packs, history, modes, settings, clipboard output, and setup replay.
 - **Mobile local models**: iOS uses WhisperKit/Core ML today. Android uses sherpa-onnx with Parakeet-TDT v3 INT8 ONNX first and Qwen3-ASR 0.6B INT8 ONNX for broader multilingual coverage. These are local model packs, not hosted APIs.
-- **No cloud fallback**: no hosted speech API, no account, no telemetry, no transcript upload.
+- **No cloud speech fallback**: no hosted speech API, no account, no telemetry, no transcript upload.
 - **Auto-backup** of every recording and transcription.
 
 ### Keyboard Shortcuts
@@ -145,7 +143,7 @@ In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No 
 | `timeout` | `0` | No limit |
 | `repetition_penalty` | `1.2` | Higher suppresses repetition loops |
 | `repetition_context_size` | `100` | Tokens considered for repetition penalty |
-| `chunk_duration` | `1200` | Seconds per internal chunk for very long audio |
+| `chunk_duration` | `1200` | Seconds per internal chunk for long audio |
 | `max_tokens` | `0` | `0` = auto-scale from duration. Cap for faster short-clip decode. |
 
 ### WhisperKit (alternative)
@@ -157,7 +155,7 @@ Whisper on Apple Neural Engine via [Argmax](https://github.com/argmaxinc/Whisper
 | `tiny` / `tiny.en` | Fastest, lowest accuracy |
 | `base` / `base.en` | |
 | `small` / `small.en` | |
-| `whisper-large-v3-v20240930` | Best accuracy (default) |
+| `whisper-large-v3-v20240930` | Accuracy-focused default |
 
 ---
 
@@ -167,7 +165,8 @@ Kokoro-82M via [kokoro-mlx](https://github.com/gabrimatic/kokoro-mlx). Runs in-p
 
 Toggle from the menu bar or Settings -> Voice. Activating the feature downloads the Kokoro voice model (~170 MB) and uses the spaCy `en_core_web_sm` dictionary plus system `espeak-ng`. Running `./setup.sh` while the toggle is on pre-fetches everything so the first speak has no wait.
 
-**Usage:**
+Use it from the keyboard or CLI:
+
 - **⌥T** on selected text in any app. Press ⌥T again, Esc, or start a recording to stop.
 - **CLI:** `wh whisper "text"`, `wh whisper --voice af_bella "text"`, or pipe stdin with `echo "hello" | wh whisper`.
 
@@ -198,7 +197,7 @@ Multiple presets available. Default is Sky (`af_sky`).
 
 ## Grammar Backends
 
-Optional. Pick a grammar backend or disable it:
+Grammar cleanup is optional. Pick a backend or leave transcription-only mode on:
 
 | Backend | Requirements | Notes |
 |---------|-------------|-------|
@@ -229,7 +228,7 @@ ollama serve
 2. Download and load a model (e.g., `google/gemma-3-4b`)
 3. **Start the local server**: Developer tab > Start Server
 
-> Loading a model does **not** start the server. Start it from Developer tab.
+Note: Loading a model does **not** start the server. Start it from Developer tab.
 
 </details>
 
@@ -239,7 +238,7 @@ ollama serve
 
 ### CLI
 
-`wh` controls everything:
+`wh` controls the service and local utilities:
 
 ```bash
 wh                  # Status and help
@@ -288,7 +287,7 @@ wh version          # Show version
 wh uninstall        # Remove Local Whisper
 ```
 
-### Voice Dictation Commands
+### Dictation Commands
 
 Speak these phrases anywhere in a dictation and Local Whisper replaces them with the literal punctuation or whitespace:
 
@@ -308,7 +307,7 @@ Speak these phrases anywhere in a dictation and Local Whisper replaces them with
 
 Custom commands go under `[dictation.commands]` in `~/.whisper/config.toml`. The pass runs before grammar correction, so grammar sees well-punctuated sentences.
 
-### Menu Bar
+### Menu Bar Controls
 
 The menu bar does not drive normal dictation. The global hotkey does. Use the menu bar for state and controls:
 
@@ -371,7 +370,7 @@ See [docs/configuration.md](docs/configuration.md) for the full TOML reference.
 
 ## Privacy
 
-Audio recording, transcription, replacements, and text-to-speech run on-device or against localhost services. Grammar correction runs on-device, localhost, or a private LAN server if you configure LM Studio that way. Setup, model downloads, `wh update`, and `wh doctor --fix` use the network to install packages, fetch models, or update the checkout.
+Audio recording, transcription, replacements, and text-to-speech run on-device or against localhost services. Grammar correction runs on-device, localhost, or a private LAN server when you configure LM Studio that way. Setup, model downloads, `wh update`, and `wh doctor --fix` use the network to install packages, fetch models, or update the checkout.
 
 | Component | Runs at |
 |-----------|---------|
@@ -391,7 +390,7 @@ After the required models and optional local services are installed, dictation a
 
 ## Architecture
 
-Python headless service (LaunchAgent). Swift owns all UI.
+Local Whisper splits runtime and UI cleanly. Python runs the headless LaunchAgent service; Swift owns the macOS UI.
 
 ```
 Python (LaunchAgent, headless)
@@ -409,14 +408,9 @@ Swift (subprocess, all UI)
   └── Settings window (lists Ollama / LM Studio models when local servers are reachable)
 ```
 
-The LaunchAgent uses `KeepAlive={SuccessfulExit=false}` with
-`ThrottleInterval=10` so real crashes auto-restart while clean stops
-(`wh stop`, `wh restart`, user-error exits) don't relaunch. Recordings
-longer than five minutes take the chunked pipeline: each VAD segment is
-transcribed, grammar-corrected, and persisted to
-`~/.whisper/current_session.jsonl` before the next chunk runs, so a
-crash mid-lecture recovers the completed chunks on next boot instead of
-losing everything.
+The LaunchAgent uses `KeepAlive={SuccessfulExit=false}` with `ThrottleInterval=10`. Real crashes auto-restart; clean stops (`wh stop`, `wh restart`, expected permission exits) do not relaunch.
+
+Recordings longer than five minutes use the chunked pipeline. Each VAD segment is transcribed, grammar-corrected, and persisted to `~/.whisper/current_session.jsonl` before the next chunk runs, so a crash mid-lecture recovers completed chunks on next boot.
 
 <details>
 <summary><strong>Data flow</strong></summary>

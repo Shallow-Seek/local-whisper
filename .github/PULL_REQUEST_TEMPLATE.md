@@ -18,7 +18,7 @@
 2.
 3.
 
-## User Visible Changes
+## Visible Changes
 
 _List any changes to behavior, config, UI, or CLI. Write `None` if internal only._
 

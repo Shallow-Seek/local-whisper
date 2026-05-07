@@ -9,7 +9,7 @@ Be respectful. Be constructive. Make this a good place for everyone regardless o
 - Welcoming and inclusive language
 - Respect for differing viewpoints and experiences
 - Graceful acceptance of constructive criticism
-- Focus on what's best for the project and community
+- Focus on project health and community safety
 
 ## Unacceptable Behavior
 
@@ -22,7 +22,7 @@ Be respectful. Be constructive. Make this a good place for everyone regardless o
 
 Report unacceptable behavior to the project maintainer at [gabrimatic.info](https://gabrimatic.info).
 
-All complaints are reviewed promptly and fairly. Confidentiality is maintained for reporters.
+Reports are reviewed promptly and fairly. Reporter confidentiality is maintained.
 
 ## Attribution
 

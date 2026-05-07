@@ -4,7 +4,7 @@
 
 Privacy is a core constraint, not a feature toggle.
 
-- **Audio and transcript processing is local.** Recording, transcription, grammar correction, and text-to-speech run on-device or against localhost services after setup.
+- **Audio and transcript processing is local.** Recording, transcription, grammar correction, and text-to-speech run on-device, on localhost, or on a private LAN server you configure after setup.
 - **Setup can use the network.** Setup, model downloads, `wh update`, and `wh doctor --fix` can fetch packages, models, or repository updates.
 - **No telemetry or analytics.** Local Whisper does not send usage analytics.
 - **Audio stays on device.** Recordings save to `~/.whisper/` and are not uploaded by the app.
@@ -25,14 +25,14 @@ No other permissions. The app does not access contacts, location, camera, or any
 
 | Boundary | Trust Level | Notes |
 |----------|-------------|-------|
-| User audio | Trusted | Captured locally, stays on device |
+| Your audio | Trusted | Captured locally, stays on device |
 | Parakeet-TDT v3 | Trusted | Runs in-process through MLX |
 | Qwen3-ASR | Trusted | Runs in-process through MLX |
 | WhisperKit server | Trusted | Runs on localhost if selected |
 | Kokoro TTS | Trusted | In-process MLX, no network |
 | Grammar backends | Trusted | All run on localhost or on-device |
-| Config file (`~/.whisper/config.toml`) | Trusted | User-controlled, local filesystem |
-| Backup directory (`~/.whisper/`) | Trusted | Local, user-readable only |
+| Config file (`~/.whisper/config.toml`) | Trusted | Local filesystem |
+| Backup directory (`~/.whisper/`) | Trusted | Local, owner-readable only |
 
 Runtime audio/transcript processing has no cloud trust boundary. Install and update paths can contact package, model, or repository hosts.
 
@@ -40,8 +40,8 @@ Runtime audio/transcript processing has no cloud trust boundary. Install and upd
 
 1. Recording is captured to a temporary WAV file in `~/.whisper/`
 2. Audio is passed to the transcription engine (Parakeet-TDT v3 in-process by default, Qwen3-ASR in-process if selected, or WhisperKit on localhost if selected)
-3. Transcription text is sent to the selected grammar backend (if enabled)
-4. Result is copied to clipboard (or pasted at cursor if auto-paste is enabled)
+3. Local Whisper sends transcription text to the selected grammar backend when grammar is enabled
+4. Local Whisper copies the result to clipboard or pastes at the cursor when auto-paste is enabled
 5. Audio is retained in `~/.whisper/` for backup
 
 After setup and model installation, audio and transcript text stay on the local machine or localhost services.
@@ -66,7 +66,7 @@ Expect acknowledgment within 48 hours.
 These are not considered vulnerabilities:
 
 - Issues requiring physical access to the machine
-- Issues requiring the user to have already granted Accessibility or Microphone permission to a malicious process
+- Issues that require you to grant Accessibility or Microphone permission to a malicious process
 - Prompt injection via grammar backend responses (the app copies text to clipboard; it does not execute it)
 
 ## Supported Versions
