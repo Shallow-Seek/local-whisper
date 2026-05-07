@@ -8,7 +8,11 @@
 
 Local Whisper is a local, no-cloud voice stack for macOS, iOS, and Android.
 
-On macOS, press a global shortcut anywhere, speak, and get cleaned text on your clipboard. On iOS, the Flutter app records and transcribes privately with WhisperKit/Core ML. On Android, the native recorder, keyboard, setup, history, and model-management shell are in place while the Android-native offline ASR adapter is still pending.
+On macOS, press a global shortcut anywhere, speak, and get cleaned text on your clipboard.
+
+On mobile, Local Whisper is the app plus the keyboard. Record in the app, keep local model packs and history on the device, then use the keyboard to bring modes, punctuation, and Local Whisper actions into other text fields.
+
+iOS transcribes locally today with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`: Parakeet-TDT v3 INT8 ONNX is the default Android pack, and Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack. No cloud fallback is planned.
 
 The built-in runtime paths stay on-device or localhost after model downloads. LM Studio can use a private LAN server if you configure one. No hosted speech API. No account. No telemetry. No transcript upload.
 
@@ -30,6 +34,7 @@ Local Whisper uses the network for setup, model downloads, and updates. Runtime 
 |--------------|---------------|
 | Recording and audio cleanup | On device |
 | Parakeet-TDT v3 and Qwen3-ASR transcription | In-process MLX |
+| Android Parakeet-TDT v3 and Qwen3-ASR transcription | On-device sherpa-onnx |
 | WhisperKit transcription | Localhost |
 | Grammar cleanup | Apple Intelligence on-device; Ollama or LM Studio on localhost or private LAN |
 | Text-to-speech | In-process Kokoro MLX |
@@ -37,14 +42,14 @@ Local Whisper uses the network for setup, model downloads, and updates. Runtime 
 
 ## At a Glance
 
-Local Whisper is for system-wide dictation, not a single web text box. Start recording with a global shortcut on macOS, clean the transcript locally, paste into any app, replay history, and use the mobile apps for private recording, local history, modes, models, and keyboard setup.
+Local Whisper is for system-wide dictation, not a single web text box. Start recording with a global shortcut on macOS, clean the transcript locally, paste into any app, replay history, and use the mobile app plus keyboard for the same private workflow on iOS and Android.
 
 | Surface | Runtime scope | Status |
 |---------|---------------|--------|
 | macOS global dictation | System-wide hotkey recording from any app, offline transcription, grammar cleanup, replacements, selected-text shortcuts, offline TTS, clipboard and auto-paste output. | Ready. Parakeet-TDT v3 is the default engine. |
 | macOS menu bar and overlay | Live status, engine and backend switching, history, saved audio, settings, updates, service controls, and recording and processing feedback. | Ready. |
-| Flutter iOS app | Private recording, local history, modes, model management, setup replay, keyboard extension setup, and WhisperKit/Core ML transcription. | Native offline transcription wired through `AVAudioEngine` plus WhisperKit/Core ML. |
-| Flutter Android app | Native recorder, input method, setup flow, keyboard verification, history, modes, model management, icons, and manifest identity. | Native shell ready. Android-native offline ASR adapter still pending. |
+| Flutter iOS app + keyboard | Record and transcribe in the app with WhisperKit/Core ML. Keep model packs and history on the device, then use the native keyboard for modes, punctuation, and text-field workflows. | Native offline transcription wired through `AVAudioEngine` plus WhisperKit/Core ML. |
+| Flutter Android app + keyboard | Record locally in the app, transcribe on-device with sherpa-onnx model packs, and use the native input method in text fields. The Android app keeps the same local history, modes, setup, and model-pack flow. | Parakeet-TDT v3 INT8 ONNX wired first. Qwen3-ASR 0.6B INT8 ONNX wired as the broader multilingual pack. |
 
 <p align="center">
   <img src="assets/ios-important-screens.png" width="760" alt="Local Whisper iOS record, history, and modes screens">
@@ -84,7 +89,8 @@ The setup script installs dependencies, downloads and warms the active local tra
 - **Keyboard shortcuts** for proofreading, rewriting, and prompt engineering on selected text.
 - **CLI**: `wh whisper`, `wh listen`, `wh transcribe` for scripting and automation.
 - **Native macOS UI**: menu bar status/control, floating overlay, and settings window.
-- **Mobile apps**: Flutter iOS and Android surfaces for private recording, history, modes, model management, and keyboard setup.
+- **Mobile app and keyboards**: iOS and Android include the Flutter app plus native keyboard surfaces. Mobile manages local model packs, history, modes, settings, clipboard output, and setup replay.
+- **Mobile local models**: iOS uses WhisperKit/Core ML today. Android uses sherpa-onnx with Parakeet-TDT v3 INT8 ONNX first and Qwen3-ASR 0.6B INT8 ONNX for broader multilingual coverage. These are local model packs, not hosted APIs.
 - **No cloud fallback**: no hosted speech API, no account, no telemetry, no transcript upload.
 - **Auto-backup** of every recording and transcription.
 
@@ -554,7 +560,7 @@ The Flutter app lives in `src/flutter/local_whisper`.
 | Surface | Status | Notes |
 |---------|--------|-------|
 | Flutter iOS app | Native transcription wired | Uses `AVAudioEngine` plus WhisperKit/Core ML through the native Swift bridge. |
-| Flutter Android app | Native shell ready | Recording bridge, input method, setup flow, model management, history, modes, and QA seeding are in place. Production ASR adapter is still pending. |
+| Flutter Android app + keyboard | Native transcription wired | Uses local WAV recording plus sherpa-onnx. Parakeet-TDT v3 INT8 ONNX is the default Android model, with Qwen3-ASR 0.6B INT8 ONNX available for broader language coverage. |
 
 See [docs/mobile.md](docs/mobile.md) for setup flow, keyboard behavior, model packs, Android notes, and mobile checks.
 

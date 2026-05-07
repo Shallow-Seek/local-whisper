@@ -2,7 +2,9 @@
 
 Flutter mobile implementation of Local Whisper for iOS and Android.
 
-The app is offline by construction once the selected model pack is installed. Flutter handles the product flow, local history, model management, modes, settings, clipboard output, and deterministic cleanup. Native Swift handles iOS microphone capture through `AVAudioEngine` and local transcription through WhisperKit/Core ML. Android has native method channels for microphone permission/status, local recording, level events, settings intents, keyboard status, and keyboard preference sync, plus a native Local Whisper input method for setup verification. There is no Apple Speech framework path and no cloud fallback.
+Mobile is the app plus the keyboard. Record in the app, keep local model packs and history on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other text fields.
+
+iOS records with `AVAudioEngine` and transcribes locally with WhisperKit/Core ML. Android records 16 kHz mono WAV audio, transcribes on-device with `sherpa_onnx`, and owns the native input method and setup path. There is no Apple Speech framework path and no cloud fallback.
 
 ## Run
 
@@ -29,6 +31,7 @@ flutter build apk --debug --dart-define=LOCAL_WHISPER_QA_SEED=true
 - `ios/LocalWhisperKeyboard/`: native Local Whisper keyboard extension.
 - `android/app/src/main/kotlin/info/gabrimatic/localwhisper/MainActivity.kt`: native Android method/event channel bridge.
 - `android/app/src/main/kotlin/info/gabrimatic/localwhisper/LocalWhisperInputMethodService.kt`: native Android Local Whisper input method.
+- `lib/src/sherpa_speech_service.dart`: Flutter-side Android sherpa-onnx transcription runtime.
 - `assets/app_icon/app_icon_1024.png`: shared source icon used for Flutter iOS, Android launcher icons, and mirrored macOS app assets.
 
 ## Current Mobile Flow
@@ -38,20 +41,24 @@ flutter build apk --debug --dart-define=LOCAL_WHISPER_QA_SEED=true
 3. Open the platform settings page for keyboard setup and app permissions when the user asks, then let the user verify the keyboard by switching to Local Whisper Keyboard in the practice field and tapping Verify on the keyboard/input method.
 4. Check the selected local model state before requesting microphone permission.
 5. Start native recording through the platform bridge.
-6. Stop recording and transcribe the file with the selected wired local engine where the production runtime exists.
+6. Stop recording and transcribe the file with the selected wired local engine where that production runtime exists.
 7. Return the raw transcript to Flutter.
 8. Apply local cleanup and the selected dictation mode.
 9. Copy the result, show it in the app, and save searchable local history.
 
-## Model Families
+## Model Packs
 
-- Qwen3-ASR: `mlx-community/Qwen3-ASR-1.7B-bf16` (~3.8 GB snapshot).
-- Parakeet-TDT v3: `mlx-community/parakeet-tdt-0.6b-v3` (~2.3 GB snapshot).
+- Parakeet-TDT v3 Android: `csukuangfj/sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8` (~640 MB ONNX snapshot).
+- Qwen3-ASR 0.6B Android: `pantinor/sherpa-onnx-qwen3-asr-0.6b-int8` (~940 MB ONNX snapshot).
+- Qwen3-ASR MLX: `mlx-community/Qwen3-ASR-1.7B-bf16` (~3.8 GB snapshot).
+- Parakeet-TDT v3 MLX: `mlx-community/parakeet-tdt-0.6b-v3` (~2.3 GB snapshot).
 - Kokoro-82M TTS: `mlx-community/Kokoro-82M-bf16` (~371 MB snapshot).
 - WhisperKit Large v3: `argmaxinc/whisperkit-coreml`, wired to `openai_whisper-large-v3-v20240930_547MB`.
 - Bundled deterministic cleanup engine.
 
-The setup model step shows the recommended WhisperKit pack inline with install progress. The optional model list opens as an in-place sheet, so first-run setup never detours to the Models tab.
+The setup model step shows the recommended pack inline with install progress: WhisperKit on iOS and Parakeet-TDT v3 INT8 ONNX on Android. The optional model list opens as an in-place sheet, so first-run setup never detours to the Models tab.
+
+WhisperKit Large v3 is wired for iOS transcription today. Parakeet-TDT v3 INT8 ONNX and Qwen3-ASR 0.6B INT8 ONNX are wired for Android through sherpa-onnx. These are local packs, not hosted APIs.
 
 ## Brand System
 
@@ -66,7 +73,7 @@ The setup model step shows the recommended WhisperKit pack inline with install p
 - First-run setup is linear and repeatable from Settings.
 - Setup does not allow step jumping from the progress indicator.
 - The keyboard step opens platform settings, explains the keyboard path, verifies through a real token inserted by the keyboard/input method, and supports finishing without the keyboard when the user chooses that path.
-- Record keeps the primary action obvious: `Start talking` begins recording when the selected WhisperKit model is installed; `Install model` opens Models when it is not. Recording shows elapsed time, a stop button, and the level meter.
+- Record keeps the primary action obvious: `Start talking` begins recording when the selected platform model is installed; `Install model` opens Models when it is not. Recording shows elapsed time, a stop button, and the level meter.
 - Settings groups powerful controls into focused sections for status, recording, cleanup, keyboard behavior, privacy, and onboarding replay.
 
 ## Android Notes
@@ -75,7 +82,7 @@ The setup model step shows the recommended WhisperKit pack inline with install p
 - Android uses the stable application ID `info.gabrimatic.localwhisper` and the same Local Whisper launcher mark as iOS/macOS.
 - The Android input method exposes Verify, punctuation, space, new-line, settings, and haptics. Add `android.permission.VIBRATE` with the input method so haptics never crash the app.
 - Android debug QA can seed the recommended pack and interaction data with `--dart-define=LOCAL_WHISPER_QA_SEED=true`.
-- Production Android still needs a real offline ASR adapter before downloaded model families can transcribe. Do not add Android cloud speech fallback.
+- Android records WAV audio through `AudioRecord`, hands the path to Flutter, and transcribes in a background isolate with sherpa-onnx. Do not add Android cloud speech fallback.
 
 ## Supported Edge Cases
 
