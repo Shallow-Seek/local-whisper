@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **Parakeet-TDT v3 is the new default transcription engine.** NVIDIA's Parakeet-TDT-0.6B-v3 ships as the default because it is accurate, multilingual, and practical on Apple Silicon. It runs in-process via [parakeet-mlx](https://github.com/senstella/parakeet-mlx), supports English plus 24 European languages, and handles long audio through overlapping 120s chunks. Qwen3-ASR remains available for English-only workflows via `wh engine qwen3_asr`; WhisperKit remains available as a third option.
-- **Parakeet settings panel** in Transcription exposing model, chunking (`chunk_duration`, `overlap_duration`), decoding strategy (`greedy` / `beam`), beam tuning (`beam_size`, `length_penalty`, `patience`, `duration_reward`), timeout, and local-attention mode with adjustable context size.
+- **Parakeet settings panel** in Transcription shows model, chunking (`chunk_duration`, `overlap_duration`), decoding strategy (`greedy` / `beam`), beam tuning (`beam_size`, `length_penalty`, `patience`, `duration_reward`), timeout, and local-attention mode with adjustable context size.
 - **`setup.sh`, `wh doctor`, and `wh update` are now engine-aware.** Only the currently-selected transcription engine's model is downloaded and warmed. Fresh installs pull Parakeet-TDT v3 (~600 MB). Switching to Qwen3-ASR later lazy-loads that model on the engine's first call; neither engine holds RAM when the other is active. Warm-up compiles the MLX graph so first inference is fast. It does not pin the model in memory.
 - Dedicated warm-up sentinels at `~/.whisper/models/.parakeet_v3_warmed` and `~/.whisper/models/.qwen3_warmed` so re-running setup skips the one-time graph compile.
 
@@ -105,7 +105,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - Auto-paste at cursor: when enabled in General settings (`auto_paste`), transcribed text is pasted directly at the active cursor position after transcription. Your clipboard is untouched. Disabled by default.
-- Text to Speech: select text in any app and press ⌥T to hear it read aloud. Kokoro-82M synthesizes speech entirely on-device with no network required.
+- Text to Speech: select text in any app and press ⌥T to hear it read aloud. Kokoro-82M synthesizes speech on-device after the model is downloaded.
 - Multiple voice presets with prefix-encoded language and gender. Default voice: `af_sky`. Selectable from General settings.
 - Overlay shows "Generating speech..." while the model synthesizes, then "Speaking..." once audio starts playing.
 - Press ⌥T again, Esc, or start a recording to stop speech at any point, including during model generation.
@@ -151,7 +151,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- Qwen3-ASR is now the default transcription engine, running fully in-process with no server required. It handles recordings up to 20 minutes natively.
+- Qwen3-ASR is now the default transcription engine, running fully in-process with no server. It handles recordings up to 20 minutes natively.
 - WhisperKit remains available as an alternative engine. Switch between engines via `wh engine <name>`, the Settings window, or by editing the config.
 - Audio pre-processing pipeline applied before every transcription: voice activity detection, silence trimming, spectral noise reduction, and level normalization.
 - Pre-recording buffer captures a short window of audio before the hotkey fires, so the first syllable is never clipped. Configurable via `pre_buffer` in config.

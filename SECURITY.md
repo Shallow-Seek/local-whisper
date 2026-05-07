@@ -29,7 +29,7 @@ No other permissions. The app does not access contacts, location, camera, or any
 | Parakeet-TDT v3 | Trusted | Runs in-process through MLX |
 | Qwen3-ASR | Trusted | Runs in-process through MLX |
 | WhisperKit server | Trusted | Runs on localhost if selected |
-| Kokoro TTS | Trusted | In-process MLX, no network |
+| Kokoro TTS | Trusted | In-process MLX after model download |
 | Grammar backends | Trusted | All run on localhost or on-device |
 | Config file (`~/.whisper/config.toml`) | Trusted | Local filesystem |
 | Backup directory (`~/.whisper/`) | Trusted | Local, owner-readable only |

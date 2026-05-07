@@ -2,7 +2,7 @@
 
 ## Summary
 
-Be respectful. Be constructive. Make this a good place for everyone regardless of background, identity, or experience level.
+Be respectful. Be constructive. Keep the project welcoming regardless of background, identity, or experience level.
 
 ## Expected Behavior
 

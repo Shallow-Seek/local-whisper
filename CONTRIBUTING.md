@@ -20,7 +20,7 @@ wh start
 wh log     # tail live output in another terminal
 ```
 
-You need Accessibility permission for the `wh` process (System Settings opens on first run) and Microphone access.
+Requirements: Accessibility permission for the `wh` process (System Settings opens on first run) and Microphone access.
 
 ## Architecture
 
@@ -175,8 +175,8 @@ Use the [bug report template](https://github.com/gabrimatic/local-whisper/issues
 
 - Output of `wh version` and `wh status`
 - Platform, OS version, and device/chip when relevant
-- selected transcription engine
-- grammar backend in use
+- Selected transcription engine
+- Grammar backend in use
 - Steps to reproduce, expected vs. actual behavior
 - Relevant lines from `wh log` if the issue involves processing or crashes
 

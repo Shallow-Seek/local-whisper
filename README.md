@@ -6,11 +6,11 @@
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11--3.12-blue.svg)]()
 [![Offline-first](https://img.shields.io/badge/offline--first-no%20cloud-green.svg)]()
 
-Local Whisper is an offline speech-to-text app and local dictation service for macOS, iOS, and Android. It is for people who dictate into real apps: press a shortcut anywhere on macOS, speak, and get cleaned text copied or pasted without sending audio to a hosted API.
+Local Whisper is an offline speech-to-text app and local dictation service for macOS, iOS, and Android. You use it when you dictate into real apps: press a shortcut anywhere on macOS, speak, and get cleaned text copied or pasted without sending audio to a hosted API.
 
 On mobile, Local Whisper is both the recorder app and the native keyboard. Record in the app, keep local model packs and history on the device, then use the keyboard to bring modes, punctuation, and Local Whisper actions into other text fields.
 
-iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`: Parakeet-TDT v3 INT8 ONNX is the default Android pack, and Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack. There is no cloud speech fallback.
+iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`; Parakeet-TDT v3 INT8 ONNX is the default Android pack, and Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack. There is no cloud speech fallback.
 
 Download the models once; run them locally after that. Built-in runtime paths stay on-device or localhost. Configure LM Studio with a private LAN server when you need that setup. No hosted speech API. No account. No telemetry. No transcript upload.
 
@@ -55,7 +55,7 @@ Local Whisper is speech-to-text for the places you already type. Start recording
 
 ## Quick Start (macOS)
 
-Apple Silicon required. Microphone and Accessibility permissions are needed.
+Requirements: **Apple Silicon**, Microphone permission, and Accessibility permission.
 
 ```bash
 git clone https://github.com/gabrimatic/local-whisper.git
@@ -90,7 +90,7 @@ The setup script installs dependencies, downloads and warms the active local tra
 - **Mobile app and keyboards**: iOS and Android include the Flutter app plus native keyboard surfaces. Mobile manages local model packs, history, modes, settings, clipboard output, and setup replay.
 - **Mobile local models**: iOS uses WhisperKit/Core ML today. Android uses sherpa-onnx with Parakeet-TDT v3 INT8 ONNX first and Qwen3-ASR 0.6B INT8 ONNX for broader multilingual coverage. These are local model packs, not hosted APIs.
 - **No cloud speech fallback**: no hosted speech API, no account, no telemetry, no transcript upload.
-- **Auto-backup** of every recording and transcription.
+- **Automatic backup** for every recording and transcription.
 
 ### Keyboard Shortcuts
 
@@ -135,7 +135,7 @@ In-process via [parakeet-mlx](https://github.com/senstella/parakeet-mlx). No ser
 
 ### Qwen3-ASR (English only)
 
-In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No local server required. Native long-audio support, up to 20 minutes in a single pass. English only. Switch with `wh engine qwen3_asr`.
+In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No local server. Native long-audio support, up to 20 minutes in a single pass. English only. Switch with `wh engine qwen3_asr`.
 
 | Setting | Default | Notes |
 |---------|---------|-------|
@@ -161,9 +161,9 @@ Whisper on Apple Neural Engine via [Argmax](https://github.com/argmaxinc/Whisper
 
 ## Text-to-Speech
 
-Kokoro-82M via [kokoro-mlx](https://github.com/gabrimatic/kokoro-mlx). Runs in-process after install. No local server required. Streaming playback starts before full synthesis completes.
+Kokoro-82M via [kokoro-mlx](https://github.com/gabrimatic/kokoro-mlx). Runs in-process after install. No local server. Streaming playback starts before full synthesis completes.
 
-Toggle from the menu bar or Settings -> Voice. Activating the feature downloads the Kokoro voice model (~170 MB) and uses the spaCy `en_core_web_sm` dictionary plus system `espeak-ng`. Running `./setup.sh` while the toggle is on pre-fetches everything so the first speak has no wait.
+Toggle from the menu bar or Settings -> Voice. Activating the feature downloads the Kokoro voice model (~170 MB) and uses the spaCy `en_core_web_sm` dictionary plus system `espeak-ng`. Run `./setup.sh` while the toggle is on to pre-fetch everything so the first speak has no wait.
 
 Use it from the keyboard or CLI:
 
@@ -345,7 +345,7 @@ Sidebar layout with focused panels:
 | Advanced | Storage paths, service log, doctor, restart, update |
 | About | Version, credits, replay tutorial |
 
-Saves settings to `~/.whisper/config.toml`. Restart-required fields warn and offer immediate restart.
+Settings save to `~/.whisper/config.toml`. Restart-required fields warn and offer immediate restart.
 
 ---
 
@@ -384,7 +384,7 @@ Audio recording, transcription, replacements, and text-to-speech run on-device o
 
 Models cached at `~/.whisper/models/`. Config and backups at `~/.whisper/`.
 
-After the required models and optional local services are installed, dictation and cleanup do not send audio or transcript text to cloud APIs.
+After models and optional local services are installed, dictation and cleanup do not send audio or transcript text to cloud APIs.
 
 ---
 
@@ -718,6 +718,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
-Created by [Soroush Yousefpour](https://gabrimatic.info)
+[Soroush Yousefpour](https://gabrimatic.info)
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/gabrimatic)

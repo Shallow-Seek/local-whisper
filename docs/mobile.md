@@ -4,7 +4,7 @@ The Flutter app is Local Whisper's mobile speech-to-text surface. It gives iOS a
 
 Record in the app, keep local data on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
 
-iOS transcribes locally today with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`. Parakeet-TDT v3 INT8 ONNX is the recommended Android pack; Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack.
+iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`. Parakeet-TDT v3 INT8 ONNX is the recommended Android pack; Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack.
 
 <p align="center">
   <img src="../assets/ios-hero-record.png" width="760" alt="Local Whisper iOS record screen">
@@ -58,7 +58,7 @@ Flutter owns Android transcription through `lib/src/sherpa_speech_service.dart`.
 
 The model manager installs Local Whisper model families from Hugging Face snapshots and verifies installed files against a local manifest before treating a pack as installed.
 
-WhisperKit Large v3 is wired for iOS transcription today. Android uses sherpa-onnx model packs. Qwen3-ASR, Parakeet-TDT v3, WhisperKit, and Kokoro are local model families; they are not hosted APIs and they are not sent to a cloud speech service.
+WhisperKit Large v3 is wired for iOS transcription. Android uses sherpa-onnx model packs. Qwen3-ASR, Parakeet-TDT v3, WhisperKit, and Kokoro are local model families; they are not hosted APIs and they are not sent to a cloud speech service.
 
 | Pack | Approx size | Notes |
 |------|-------------|-------|
