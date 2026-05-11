@@ -2,21 +2,21 @@
 
 ## Summary
 
-Be respectful. Be constructive. Keep the project welcoming regardless of background, identity, or experience level.
+Keep project spaces respectful, constructive, and safe for people with different backgrounds, identities, and experience levels.
 
 ## Expected Behavior
 
-- Welcoming and inclusive language
-- Respect for differing viewpoints and experiences
-- Graceful acceptance of constructive criticism
-- Focus on project health and community safety
+- Use welcoming and inclusive language
+- Respect different viewpoints and experiences
+- Accept constructive criticism with care
+- Keep the focus on project health and community safety
 
 ## Unacceptable Behavior
 
-- Trolling, insults, derogatory comments, personal or political attacks
+- Trolling, insults, derogatory comments, or personal attacks
 - Public or private harassment
-- Publishing others' private information without explicit permission
-- Conduct reasonably considered inappropriate in a professional setting
+- Publishing private information without explicit permission
+- Conduct that would be inappropriate in a professional setting
 
 ## Enforcement
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# Local Whisper Setup Script
-# Installs all dependencies for local voice transcription
+# Local Whisper setup
+# Installs the local macOS dictation service and its selected model
 #
 
 set -e
@@ -97,7 +97,7 @@ print('yes' if ok else 'no')
 echo ""
 echo -e "${BOLD}╭────────────────────────────────────────╮${NC}"
 echo -e "${BOLD}│${NC}  ${CYAN}Local Whisper${NC} · Setup                 ${BOLD}│${NC}"
-echo -e "${BOLD}│${NC}  ${DIM}Transcription · Grammar · TTS${NC}         ${BOLD}│${NC}"
+echo -e "${BOLD}│${NC}  ${DIM}Local dictation · Grammar · TTS${NC}        ${BOLD}│${NC}"
 echo -e "${BOLD}╰────────────────────────────────────────╯${NC}"
 
 # ============================================================================
@@ -119,7 +119,7 @@ MACOS_VERSION=$(sw_vers -productVersion)
 MACOS_MAJOR=$(echo "$MACOS_VERSION" | cut -d'.' -f1)
 log_ok "macOS $MACOS_VERSION"
 if [[ "$MACOS_MAJOR" -lt 26 ]]; then
-    log_info "Apple Intelligence grammar requires macOS 26+; Ollama and LM Studio remain available."
+    log_info "Apple Intelligence grammar requires macOS 26+; use Ollama or LM Studio on this Mac."
 fi
 
 # ============================================================================
@@ -323,7 +323,7 @@ model.warm_up()
         ;;
 
     whisperkit)
-        log_info "WhisperKit engine selected. Install 'whisperkit-cli' via Homebrew; models download on first run."
+        log_info "WhisperKit engine selected. Install 'whisperkit-cli' with Homebrew; models download on first run."
         ;;
 
     *)
@@ -331,7 +331,7 @@ model.warm_up()
         ;;
 esac
 
-# Text-to-Speech (Kokoro): only prepare when the user has TTS enabled. Off by
+# Text-to-Speech (Kokoro): only prepare when TTS is enabled. Off by
 # default to keep fresh installs lean (~170 MB model + spaCy dict). Run
 # `./setup.sh` again after enabling TTS in Settings to download the assets.
 TTS_ENABLED=$("$VENV_DIR/bin/python3" -c "
@@ -339,7 +339,7 @@ from whisper_voice.config import load_config
 print('true' if load_config().tts.enabled else 'false')
 " 2>/dev/null || echo "false")
 
-# ffmpeg is a hard requirement for Parakeet-TDT (our default engine): its
+# ffmpeg is a hard requirement for Parakeet-TDT (the default engine): its
 # audio loader shells out to `ffmpeg` for every transcribe call. Install
 # unconditionally so a fresh machine can transcribe immediately.
 if ! command -v ffmpeg &>/dev/null; then
@@ -605,7 +605,7 @@ fi
 
 echo ""
 if [ "$PERMISSIONS_OK" = "true" ]; then
-    echo -e "${GREEN}${BOLD}  ✓ Setup complete!${NC}"
+    echo -e "${GREEN}${BOLD}  ✓ Setup complete.${NC}"
 else
     echo -e "${YELLOW}${BOLD}  ⚠ Setup complete (permissions pending)${NC}"
     echo -e "  ${DIM}Grant missing permissions in System Settings, then: ${NC}${BOLD}wh restart${NC}"

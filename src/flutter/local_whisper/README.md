@@ -1,12 +1,12 @@
 # Local Whisper
 
-This Flutter app is the mobile speech-to-text implementation of Local Whisper for iOS and Android.
+This Flutter app is Local Whisper's mobile speech-to-text implementation for iOS and Android.
 
-Mobile is both the recorder app and the keyboard. Record in the app, keep local model packs and history on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
+Mobile is both the recorder app and the keyboard. Record in the app, keep model packs and history on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
 
 iOS records with `AVAudioEngine` and transcribes locally with WhisperKit/Core ML. Android records 16 kHz mono WAV audio, transcribes on-device with `sherpa_onnx`, and owns the native input method and setup path. There is no Apple Speech framework path and no cloud speech fallback.
 
-## Run
+## Checks
 
 ```bash
 flutter pub get
@@ -34,9 +34,9 @@ flutter build apk --debug --dart-define=LOCAL_WHISPER_QA_SEED=true
 - `lib/src/sherpa_speech_service.dart`: Flutter-side Android sherpa-onnx transcription runtime.
 - `assets/app_icon/app_icon_1024.png`: shared source icon used for Flutter iOS, Android launcher icons, and mirrored macOS app assets.
 
-## Current Mobile Flow
+## Current Flow
 
-1. On first launch, hold the shell behind a branded loading state until stored setup state is known.
+1. On first launch, hold the shell behind the loading state until stored setup state is known.
 2. Run the full-screen setup flow: welcome, inline model-pack install, microphone permission, keyboard/input-method handoff, and practice.
 3. Open the platform settings page for keyboard setup and app permissions on request, then verify the keyboard by switching to Local Whisper Keyboard in the practice field and tapping Verify on the keyboard/input method.
 4. Check the selected local model state before requesting microphone permission.
@@ -56,23 +56,23 @@ flutter build apk --debug --dart-define=LOCAL_WHISPER_QA_SEED=true
 - WhisperKit Large v3: `argmaxinc/whisperkit-coreml`, wired to `openai_whisper-large-v3-v20240930_547MB`.
 - Bundled deterministic cleanup engine.
 
-The setup model step shows the recommended pack inline with install progress: WhisperKit on iOS and Parakeet-TDT v3 INT8 ONNX on Android. The optional model list opens as an in-place sheet, so first-run setup never detours to the Models tab.
+The setup model step shows the recommended pack inline with install progress: WhisperKit on iOS and Parakeet-TDT v3 INT8 ONNX on Android. The optional model list opens as an in-place sheet, so first-run setup does not detour to the Models tab.
 
 WhisperKit Large v3 is wired for iOS transcription today. Parakeet-TDT v3 INT8 ONNX and Qwen3-ASR 0.6B INT8 ONNX are wired for Android through sherpa-onnx. These are local packs, not hosted APIs.
 
 ## Brand System
 
-- Shared graphite background: `#091013`.
-- Shared panel color: `#121821`.
-- Shared mint accent: `#75E3BE`.
-- Shared violet accent: `#AFA2FF`.
-- Flutter iOS, Android, the keyboard surfaces, and the macOS Swift UI use the same accent palette and app-icon source.
+- Graphite background: `#091013`.
+- Panel color: `#121821`.
+- Mint accent: `#75E3BE`.
+- Violet accent: `#AFA2FF`.
+- Flutter iOS, Android, keyboard surfaces, and the macOS Swift UI use the same accent palette and app-icon source.
 
 ## Setup and Settings
 
 - First-run setup is linear and repeatable from Settings.
 - Setup does not allow step jumping from the progress indicator.
-- The keyboard step opens platform settings, explains the keyboard path, verifies through a real token inserted by the keyboard/input method, and supports finishing without the keyboard when you choose that path.
+- The keyboard step opens platform settings, explains the keyboard path, verifies through a real token inserted by the keyboard/input method, and lets you finish without the keyboard when you choose that path.
 - Record keeps the primary action obvious: `Start talking` begins recording when the selected platform model is installed; `Install model` opens Models when it is not. Recording shows elapsed time, a stop button, and the level meter.
 - Settings groups advanced controls into focused sections for status, recording, cleanup, keyboard behavior, privacy, and onboarding replay.
 

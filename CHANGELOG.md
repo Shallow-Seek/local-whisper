@@ -1,10 +1,14 @@
 # Changelog
 
-This changelog tracks notable project changes.
+This changelog tracks notable Local Whisper changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+### Changed
+
+- Aligned public docs, setup/onboarding copy, issue templates, and mobile guides with the project voice: local-first, concrete about runtime boundaries, and specific about the macOS, iOS, and Android surfaces.
 
 ### Fixed
 

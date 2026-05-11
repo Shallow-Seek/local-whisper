@@ -1,5 +1,5 @@
-name: Feature Request
-description: Suggest a new feature or improvement
+name: Feature request
+description: Suggest a focused Local Whisper improvement.
 labels: ["enhancement"]
 body:
   - type: textarea
@@ -15,7 +15,7 @@ body:
     id: problem
     attributes:
       label: Problem to solve
-      description: What pain point or limitation does this address?
+      description: What pain point or limitation this addresses.
     validations:
       required: true
 
@@ -38,8 +38,8 @@ body:
   - type: textarea
     id: solution
     attributes:
-      label: Proposed solution
-      description: How would you like it to work? Be specific about behavior, UI, or API.
+      label: Proposed behavior
+      description: Describe the behavior, UI, or API you want.
     validations:
       required: true
 
@@ -47,7 +47,7 @@ body:
     id: alternatives
     attributes:
       label: Alternatives considered
-      description: Other approaches you thought about and why they fall short.
+      description: Other approaches you considered and why they fall short.
     validations:
       required: false
 

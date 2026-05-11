@@ -5,14 +5,14 @@ build-backend = "hatchling.build"
 [project]
 name = "local-whisper"
 version = "1.6.1"
-description = "Local voice transcription with grammar correction for macOS"
+description = "Local macOS dictation with local transcription and grammar cleanup"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11,<3.13"
 authors = [
     { name = "Soroush Yousefpour" }
 ]
-keywords = ["voice", "transcription", "whisper", "macos", "local", "privacy"]
+keywords = ["voice", "dictation", "transcription", "macos", "local", "privacy"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: MacOS X",

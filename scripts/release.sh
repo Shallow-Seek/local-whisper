@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Cut a new local-whisper release end-to-end.
+# Cut a Local Whisper release end-to-end.
 #
 # Usage: ./scripts/release.sh X.Y.Z
 #
-# Does, in order:
+# Flow:
 #   1. Sanity checks (clean tree, on main, up to date, tag doesn't exist)
 #   2. Bumps version in pyproject.toml, setup.sh, src/whisper_voice/cli/build.py
 #   3. Rewrites CHANGELOG.md [Unreleased] → [X.Y.Z] - TODAY
@@ -13,15 +13,15 @@
 #   7. Creates the GitHub release with the X.Y.Z CHANGELOG section as notes
 #   8. Bumps the homebrew-local-whisper formula tarball url + sha256 and pushes
 #
-# Requires:
+# Requirements:
 #   - `gh` authed to github.com with push on both repos
 #   - homebrew-local-whisper checked out at ../homebrew-local-whisper
 #     (override with HOMEBREW_TAP_DIR=/path/to/tap)
 #   - .venv with pytest installed for step 4
 #
-# For dependency-floor bumps (numpy, pynput, pyobjc-*, soundfile, ...) the
-# matching `resource` wheel URL + sha256 in the formula still has to be
-# refreshed by hand before running this script. Pull from
+# For dependency-floor bumps (numpy, pynput, pyobjc-*, soundfile, ...), refresh
+# the matching `resource` wheel URL and sha256 in the formula before running this
+# script. Pull from
 # https://pypi.org/pypi/<pkg>/json, pick the cp312 macosx_11_0_arm64 wheel.
 
 set -euo pipefail

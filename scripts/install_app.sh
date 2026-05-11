@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Install Local Whisper.app to /Applications and set as Login Item
+# Install a Local Whisper.app bundle to /Applications and set it as a Login Item.
 #
 # Usage: ./scripts/install_app.sh
 # Requires: dist/Local Whisper.app to exist (run build_app.sh first)

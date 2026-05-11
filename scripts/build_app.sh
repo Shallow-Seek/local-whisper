@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Build Local Whisper.app bundle using py2app
+# Build a Local Whisper.app bundle with py2app.
 #
 # Usage: ./scripts/build_app.sh [--venv VENV_DIR]
 # Output: dist/Local Whisper.app
 #
-# NOTE: This bundle statically includes pynput (LGPL-3.0). The full project
+# Note: This bundle statically includes pynput (LGPL-3.0). The full project
 # source is provided to satisfy LGPL re-linking requirements. See README.md
 # "Third-Party Licenses" for details.
 #

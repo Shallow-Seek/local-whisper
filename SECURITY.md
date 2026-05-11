@@ -12,14 +12,14 @@ Privacy is a core constraint, not a feature toggle.
 
 ## Permissions
 
-Two macOS permissions, nothing more:
+macOS needs two permissions:
 
 | Permission | Why | Scope |
 |------------|-----|-------|
 | **Microphone** | Record voice for transcription | Active only during recording |
 | **Accessibility** | Detect global hotkey and keyboard shortcuts | Monitors key events for hotkey, TTS shortcut, and text shortcuts |
 
-No other permissions. The app does not access contacts, location, camera, or any other system resource.
+No other permissions are requested. The app does not access contacts, location, camera, or other system resources.
 
 ## Trust Boundaries
 
@@ -44,11 +44,11 @@ Runtime audio/transcript processing has no cloud trust boundary. Install and upd
 4. Local Whisper copies the result to clipboard or pastes at the cursor when auto-paste is enabled
 5. Audio is retained in `~/.whisper/` for backup
 
-After setup and model installation, audio and transcript text stay on the local machine or localhost services.
+After setup and model installation, audio and transcript text stay on the local machine, localhost services, or a private LAN server you configure for LM Studio.
 
 ## Vulnerability Reporting
 
-Report vulnerabilities responsibly:
+Report vulnerabilities privately:
 
 1. **Do not open a public issue.** Vulnerabilities stay private until a fix ships.
 2. Use [GitHub's private vulnerability reporting](https://github.com/gabrimatic/local-whisper/security/advisories/new) to submit.

@@ -1,6 +1,6 @@
-# Local Whisper iOS App Store TODO
+# Local Whisper Mobile Release Checklist
 
-This checklist defines the publish-grade iOS Flutter app scope.
+This checklist tracks the mobile work needed for a publish-grade Local Whisper app and keyboard.
 
 ## Product Surface
 
@@ -9,12 +9,12 @@ This checklist defines the publish-grade iOS Flutter app scope.
 - [x] Custom iOS app icon assets.
 - [x] iOS keyboard extension target.
 - [x] Keyboard settings in the main app.
-- [x] First-run onboarding for permissions, offline models, keyboard setup, and privacy.
+- [x] First-run onboarding for permissions, local models, keyboard setup, and privacy.
 - [ ] App Store screenshots and preview copy.
 - [x] Production display name and bundle identifiers.
 - [ ] Signing team, archive profile, and App Store Connect metadata.
 
-## Offline Transcription
+## Local Transcription
 
 - [x] Local model catalog with install/remove state.
 - [x] Full Hugging Face snapshot installer for Qwen3-ASR, Parakeet-TDT v3, Kokoro-82M TTS, and WhisperKit.
@@ -32,7 +32,7 @@ This checklist defines the publish-grade iOS Flutter app scope.
 
 ## Text Cleanup And Modes
 
-- [x] Deterministic offline cleanup for punctuation, capitalization, filler words.
+- [x] Deterministic local cleanup for punctuation, capitalization, and filler words.
 - [x] Built-in Clean, Message, Notes, and Prompt modes.
 - [x] Editable custom modes.
 - [ ] Mode sync with keyboard quick actions through App Group storage.

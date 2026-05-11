@@ -1,8 +1,8 @@
 # Mobile Apps
 
-The Flutter app is Local Whisper's mobile speech-to-text surface. It gives iOS and Android the recorder app, local model packs, searchable history, modes, and a native keyboard for text fields.
+The Flutter app is Local Whisper's mobile speech-to-text surface. It gives iOS and Android a recorder app, local model packs, searchable history, modes, and a native keyboard for text fields.
 
-Record in the app, keep local data on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
+Record in the app, keep data on the device, and use modes to shape the finished text. The iOS keyboard extension and Android input method bring Local Whisper actions into other apps.
 
 iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`. Parakeet-TDT v3 INT8 ONNX is the recommended Android pack; Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack.
 
@@ -19,7 +19,7 @@ iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio
 | Surface | Status | Notes |
 |---------|--------|-------|
 | iOS app + keyboard | Native transcription wired | Record and transcribe locally with `AVAudioEngine` plus WhisperKit/Core ML. The keyboard extension gives text fields Local Whisper modes, punctuation, haptics, and setup verification. |
-| Android app + keyboard | Native transcription wired | Record local WAV audio, transcribe with sherpa-onnx model packs, and verify the native input method in a real text field. The app keeps history, modes, and local model packs on device. |
+| Android app + keyboard | Native transcription wired | Record local WAV audio, transcribe with sherpa-onnx model packs, and verify the native input method in a real text field. The app keeps history, modes, and model packs on device. |
 
 ## Product Flow
 
@@ -56,16 +56,16 @@ Flutter owns Android transcription through `lib/src/sherpa_speech_service.dart`.
 
 ## Model Packs
 
-The model manager installs Local Whisper model families from Hugging Face snapshots, retries transient manifest and file-download failures, and verifies installed files against a local manifest before treating a pack as installed.
+The model manager installs Local Whisper model families from Hugging Face snapshots, retries transient manifest and file-download failures, and verifies installed files against a local manifest before a pack becomes available.
 
 WhisperKit Large v3 is wired for iOS transcription. Android uses sherpa-onnx model packs. Qwen3-ASR, Parakeet-TDT v3, WhisperKit, and Kokoro are local model families; they are not hosted APIs and they are not sent to a cloud speech service.
 
 | Pack | Approx size | Notes |
 |------|-------------|-------|
-| Parakeet-TDT v3 INT8 ONNX | 640 MB | Default Android offline ASR pack through sherpa-onnx. |
+| Parakeet-TDT v3 INT8 ONNX | 640 MB | Default Android local ASR pack through sherpa-onnx. |
 | Qwen3-ASR 0.6B INT8 ONNX | 940 MB | Android multilingual ASR pack through sherpa-onnx. |
-| Qwen3-ASR MLX | 3.8 GB | Desktop/iOS-family offline ASR pack. |
-| Parakeet-TDT v3 MLX | 2.3 GB | Desktop/iOS-family offline ASR pack. |
+| Qwen3-ASR MLX | 3.8 GB | Desktop/iOS-family local ASR pack. |
+| Parakeet-TDT v3 MLX | 2.3 GB | Desktop/iOS-family local ASR pack. |
 | Kokoro-82M TTS | 371 MB | Local text-to-speech model. |
 | WhisperKit Large v3 | 550 MB | Wired iOS Core ML folder. |
 
@@ -77,9 +77,9 @@ Android debug QA can seed the recommended pack and interaction data:
 flutter run --dart-define=LOCAL_WHISPER_QA_SEED=true
 ```
 
-Android requests microphone permission, records local WAV audio, shows levels, stores local data, verifies the native input method, and transcribes with the installed sherpa-onnx model pack. Debug QA seeds interaction state so emulator passes can exercise the app and keyboard flow without downloading a large model each time.
+Android requests microphone permission, records local WAV audio, shows levels, stores data locally, verifies the native input method, and transcribes with the installed sherpa-onnx model pack. Debug QA seeds interaction state so emulator passes can exercise the app and keyboard flow without downloading a large model each time.
 
-Large model downloads can fail because of flaky network or Hugging Face edge responses. The app retries transient manifest and file failures automatically; if the install still fails, tap Download again after the connection is stable.
+Large model downloads can fail on flaky networks or temporary Hugging Face edge responses. The app retries transient manifest and file failures automatically. If the install still fails, tap Download again after the connection is stable.
 
 ## Checks
 

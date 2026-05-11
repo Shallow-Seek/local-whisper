@@ -1,8 +1,8 @@
 # Configuration
 
-Local Whisper stores settings in `~/.whisper/config.toml`.
+Local Whisper stores macOS service settings in `~/.whisper/config.toml`.
 
-This is the full config reference. Change most settings from the app or with `wh config`; edit the TOML directly for manual control.
+Change most settings from the app or with `wh config`. Edit the TOML directly when you need exact control.
 
 ## Full Reference
 

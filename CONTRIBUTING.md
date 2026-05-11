@@ -1,6 +1,6 @@
 # Contributing
 
-Contribute focused fixes, transcription engines, grammar backends, mobile improvements, and documentation updates.
+Contribute focused fixes: transcription engines, grammar backends, mobile improvements, UI work, tests, and documentation.
 
 ## Development Setup
 
@@ -13,7 +13,7 @@ pip install -e .
 wh build   # builds the Swift UI app
 ```
 
-Run the service:
+Start the service:
 
 ```bash
 wh start
@@ -24,7 +24,7 @@ Requirements: Accessibility permission for the `wh` process (System Settings ope
 
 ## Architecture
 
-Python runs as a headless LaunchAgent service. Swift owns all UI (menu bar, overlay, settings). They communicate over a Unix socket with newline-delimited JSON.
+Python runs as a headless LaunchAgent service. Swift owns the macOS UI: menu bar, overlay, settings, and onboarding. They communicate over a Unix socket with newline-delimited JSON.
 
 ```
 src/whisper_voice/
@@ -87,24 +87,29 @@ src/whisper_voice/
 
 ```
 LocalWhisperUI/Sources/LocalWhisperUI/
-├── AppMain.swift                        # @main entry, sleep/wake observer, onboarding presenter
-├── AppState.swift                       # Observable state, IPC message handling
-├── IPCClient.swift                      # Unix socket connection
-├── IPCMessages.swift                    # Codable message types (incl. DictationConfig)
-├── MenuBarView.swift                    # Menu bar dropdown
-├── OverlayWindowController.swift        # Floating overlay panel
-├── OverlayView.swift                    # Recording/processing/speaking pill
-├── OnboardingView.swift                 # 4-step first-launch tutorial + presenter
-├── GeneralSettingsView.swift            # Engine, grammar, dictation, TTS, UI toggles
-├── AdvancedSettingsView.swift           # Shell for Advanced tab + auto-fetch hook
-├── AdvancedSettingsView+Audio.swift     # VAD, noise reduction, pre-buffer
-├── AdvancedSettingsView+Transcription.swift  # WhisperKit + Qwen3 params
-├── AdvancedSettingsView+Grammar.swift   # Ollama + LM Studio auto-fetch, AI status
-├── AdvancedSettingsView+IO.swift        # Shortcuts, TTS, storage
-├── AboutView.swift                      # Version, credits, Replay Tutorial
-├── SettingsView.swift                   # Tab container
-├── SharedViews.swift                    # DeferredTextField/Editor helpers
-└── Constants.swift                      # App-wide constants
+├── AppMain.swift                  # @main entry, sleep/wake observer, onboarding presenter
+├── AppState.swift                 # Observable state and IPC message handling
+├── IPCClient.swift                # Unix socket connection
+├── IPCMessages.swift              # Codable message types
+├── MenuBarView.swift              # Menu bar dropdown
+├── OverlayWindowController.swift  # Floating overlay panel
+├── OverlayView.swift              # Recording, processing, and speaking pill
+├── OnboardingView.swift           # First-launch and replay tutorial
+├── SettingsView.swift             # Sidebar settings root
+├── RecordingPanel.swift           # Trigger key and audio cleanup
+├── TranscriptionPanel.swift       # Engine picker and per-engine parameters
+├── GrammarPanel.swift             # Backend picker and local LLM settings
+├── VoicePanel.swift               # TTS and dictation commands
+├── VocabularyPanel.swift          # Replacements editor
+├── OutputPanel.swift              # Overlay, sounds, notifications, paste, history
+├── ShortcutsPanel.swift           # Text-transform keybindings
+├── ActivityPanel.swift            # Usage stats
+├── AdvancedPanel.swift            # Storage, logs, doctor, restart, update
+├── AboutView.swift                # Version, credits, and replay tutorial
+├── EngineSettingsSections.swift   # Shared engine setting controls
+├── Theme.swift                    # Typography, spacing, tones, accents
+├── SharedViews.swift              # Deferred fields, status pills, shared rows
+└── Constants.swift                # App-wide constants
 ```
 
 Key constraint: **lazy loading**. Backends, engines, and models initialize only when selected. Non-selected components stay uninitialized. If your change touches initialization paths, verify startup memory footprint has not increased.
@@ -118,7 +123,7 @@ Mobile lives in `src/flutter/local_whisper`. Flutter owns the shell, setup, hist
 3. Add an entry to `BACKEND_REGISTRY` in `backends/__init__.py`.
 4. Done. The Grammar submenu, CLI, and Settings window all generate from the registry automatically.
 
-See `backends/ollama/` for a minimal reference implementation.
+Reference: `backends/ollama/`.
 
 ## New Transcription Engine
 
@@ -126,7 +131,7 @@ See `backends/ollama/` for a minimal reference implementation.
 2. Add an entry to `ENGINE_REGISTRY` in `engines/__init__.py`.
 3. Done. The Engine submenu, CLI, and Settings window all generate from the registry automatically.
 
-See `engines/whisperkit.py` for a reference implementation.
+Reference: `engines/whisperkit.py`.
 
 ## New TTS Provider
 
@@ -134,7 +139,7 @@ See `engines/whisperkit.py` for a reference implementation.
 2. Add an entry to `TTS_REGISTRY` in `tts/__init__.py`.
 3. Done. The TTS voice picker and CLI generate from the registry automatically.
 
-See `tts/kokoro_tts.py` for the reference implementation.
+Reference: `tts/kokoro_tts.py`.
 
 ## Testing
 
@@ -146,7 +151,7 @@ cd LocalWhisperUI && swift build -c release
 cd src/flutter/local_whisper && flutter analyze && flutter test
 ```
 
-Manual verification flow:
+Manual verification:
 
 1. Run `wh` and select a grammar backend from Settings
 2. Double-tap Right Option to record
@@ -161,13 +166,13 @@ If your change affects TTS, also test ⌥T on selected text.
 
 ## PR Checklist
 
-- One feature or fix per PR. Keep scope tight.
-- Test end-to-end before opening.
-- Update `README.md` if visible behavior changes.
-- No breaking config changes without migration notes in the PR description.
-- Match existing code style. No reformatting unrelated files.
-- Preserve lazy loading. Eager backend/model initialization gets flagged in review.
-- Tested TTS if applicable (⌥T on selected text).
+- Keep one feature or fix per PR.
+- Test the changed flow end-to-end before opening.
+- Update `README.md` when visible behavior changes.
+- Include migration notes for breaking config changes.
+- Match existing code style; leave unrelated files alone.
+- Preserve lazy loading. Eager backend or model initialization gets flagged in review.
+- Test TTS when applicable (`⌥T` on selected text).
 
 ## Reporting Issues
 

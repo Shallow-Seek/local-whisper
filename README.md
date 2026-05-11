@@ -4,29 +4,27 @@
 [![Platform: macOS | iOS | Android](https://img.shields.io/badge/platform-macOS%20%7C%20iOS%20%7C%20Android-lightgrey.svg)]()
 [![Apple Silicon](https://img.shields.io/badge/Apple_Silicon-required-blue.svg)]()
 [![Python 3.11-3.12](https://img.shields.io/badge/Python-3.11--3.12-blue.svg)]()
-[![Offline-first](https://img.shields.io/badge/offline--first-no%20cloud-green.svg)]()
+[![Local-first](https://img.shields.io/badge/local--first-on--device-green.svg)]()
 
-Local Whisper is an offline speech-to-text app and local dictation service for macOS, iOS, and Android. You use it when you dictate into real apps: press a shortcut anywhere on macOS, speak, and get cleaned text copied or pasted without sending audio to a hosted API.
+Local Whisper is a local-first speech-to-text app and dictation service for macOS, iOS, and Android. You use it where you already type: press a shortcut on macOS, speak, and get cleaned text copied or pasted without sending audio to a hosted speech API.
 
-On mobile, Local Whisper is both the recorder app and the native keyboard. Record in the app, keep local model packs and history on the device, then use the keyboard to bring modes, punctuation, and Local Whisper actions into other text fields. Large model-pack installs retry transient download failures and verify files before a pack is marked ready.
+On mobile, Local Whisper is both the recorder app and the keyboard. Record in the app, keep model packs and history on the device, then use the keyboard to bring modes, punctuation, and Local Whisper actions into other text fields. Large model-pack installs retry transient download failures and verify files before a pack is marked ready.
 
 iOS transcribes locally with WhisperKit/Core ML. Android records local WAV audio and transcribes on-device through `sherpa_onnx`; Parakeet-TDT v3 INT8 ONNX is the default Android pack, and Qwen3-ASR 0.6B INT8 ONNX is the broader multilingual pack. There is no cloud speech fallback.
 
-Download the models once; run them locally after that. Built-in runtime paths stay on-device or localhost. Configure LM Studio with a private LAN server when you need that setup. No hosted speech API. No account. No telemetry. No transcript upload.
+Download the models once, then run them locally. Built-in runtime paths stay on-device or localhost. Configure LM Studio with a private LAN server only when you want that setup. No hosted speech API. No account. No telemetry. No transcript upload.
 
 Double-tap Right Option from any app to start recording, tap Right Option or Space to stop, and press Esc to cancel.
 
-Use the menu bar for status, engine and grammar switching, history, settings, updates, and service controls.
-
-Parakeet-TDT v3 is the default offline speech-to-text engine on macOS.
+Use the menu bar for status, engine and grammar switching, history, settings, updates, and service controls. Parakeet-TDT v3 is the default macOS transcription engine.
 
 <p align="center">
   <img src="assets/hero.png" width="860" alt="Local Whisper macOS settings with Parakeet-TDT v3 active">
 </p>
 
-## Offline By Design
+## Local Runtime
 
-Local Whisper uses the network for setup, model downloads, and updates. After that, audio and transcript processing stays on-device, localhost, or a private LAN server you configure. It does not use hosted speech APIs.
+Local Whisper uses the network for setup, model downloads, and updates. After that, audio and transcript processing stays on-device, localhost, or a private LAN server you configure. The product does not include a hosted speech fallback.
 
 | Runtime path | Where it runs |
 |--------------|---------------|
@@ -40,20 +38,20 @@ Local Whisper uses the network for setup, model downloads, and updates. After th
 
 ## At a Glance
 
-Local Whisper is speech-to-text for the places you already type. Start recording with a global shortcut on macOS, clean the transcript locally, paste into any app, replay history, and use the mobile recorder app plus native keyboard for the same private workflow on iOS and Android.
+Local Whisper is speech-to-text for the places you already type. Start recording with a global shortcut on macOS, clean the transcript locally, paste into any app, replay history, and use the mobile recorder plus keyboard for the same local workflow on iOS and Android.
 
 | Surface | Runtime scope | Status |
 |---------|---------------|--------|
-| macOS global dictation | System-wide hotkey recording from any app, offline transcription, grammar cleanup, replacements, selected-text shortcuts, offline TTS, clipboard and auto-paste output. | Ready. Parakeet-TDT v3 is the default engine. |
+| macOS global dictation | System-wide hotkey recording from any app, local transcription, grammar cleanup, replacements, selected-text shortcuts, Kokoro TTS, clipboard, and auto-paste output. | Ready. Parakeet-TDT v3 is the default engine. |
 | macOS menu bar and overlay | Live status, engine and backend switching, history, saved audio, settings, updates, service controls, and recording and processing feedback. | Ready. |
-| Flutter iOS app + keyboard | Record and transcribe in the app with WhisperKit/Core ML. Keep model packs and history on the device, then use the native keyboard for modes, punctuation, and text-field workflows. | Native offline transcription wired through `AVAudioEngine` plus WhisperKit/Core ML. |
+| Flutter iOS app + keyboard | Record and transcribe in the app with WhisperKit/Core ML. Keep model packs and history on the device, then use the native keyboard for modes, punctuation, and text-field workflows. | Native local transcription wired through `AVAudioEngine` plus WhisperKit/Core ML. |
 | Flutter Android app + keyboard | Record locally in the app, transcribe on-device with sherpa-onnx model packs, and use the native input method in text fields. The Android app keeps the same local history, modes, setup, and model-pack flow. | Parakeet-TDT v3 INT8 ONNX wired first. Qwen3-ASR 0.6B INT8 ONNX wired as the broader multilingual pack. |
 
 <p align="center">
   <img src="assets/ios-important-screens.png" width="760" alt="Local Whisper iOS record, history, and modes screens">
 </p>
 
-## Quick Start (macOS)
+## macOS Quick Start
 
 Requirements: **Apple Silicon**, Microphone permission, and Accessibility permission.
 
@@ -63,7 +61,7 @@ cd local-whisper
 ./setup.sh
 ```
 
-The setup script installs dependencies, downloads and warms the active local transcription model (Parakeet by default), builds the Swift UI, configures auto-start, and creates the `wh` alias. Other engines download when you switch to them; Kokoro downloads when text-to-speech is enabled.
+The setup script installs dependencies, downloads and warms the active transcription model (Parakeet by default), builds the Swift UI, configures auto-start, and creates the `wh` alias. Other engines download when you switch to them. Kokoro downloads when text-to-speech is enabled.
 
 | Action | Key |
 |--------|-----|
@@ -79,15 +77,15 @@ The setup script installs dependencies, downloads and warms the active local tra
 ## Features
 
 - **Global dictation hotkey**: start recording from any app without focusing a Local Whisper window. Stop with Right Option or Space; the final text lands on the clipboard or pastes at the cursor.
-- **Offline transcription** via in-process MLX for Parakeet-TDT v3 and Qwen3-ASR. WhisperKit is available through a local server.
+- **Local transcription** via in-process MLX for Parakeet-TDT v3 and Qwen3-ASR. WhisperKit is available through a local server.
 - **Local grammar correction** via Apple Intelligence, Ollama, or LM Studio; optional.
-- **Text-to-speech** reads any selected text aloud. Works in any app, multiple voices, streaming playback, offline via Kokoro MLX.
+- **Text-to-speech** reads selected text aloud in any app with multiple voices and streaming playback through Kokoro MLX.
 - **Text replacements** for spoken-to-corrected mappings.
 - **Audio processing**: VAD, silence trimming, noise reduction, normalization.
 - **Keyboard shortcuts** for proofreading, rewriting, and prompt engineering on selected text.
 - **CLI**: `wh whisper`, `wh listen`, `wh transcribe` for scripting and automation.
 - **Native macOS UI**: menu bar status/control, floating overlay, and settings window.
-- **Mobile app and keyboards**: iOS and Android include the Flutter app plus native keyboard surfaces. Mobile manages local model packs, history, modes, settings, clipboard output, and setup replay.
+- **Mobile app and keyboards**: iOS and Android include the Flutter app plus native keyboard surfaces. Mobile manages model packs, history, modes, settings, clipboard output, and setup replay.
 - **Mobile local models**: iOS uses WhisperKit/Core ML today. Android uses sherpa-onnx with Parakeet-TDT v3 INT8 ONNX first and Qwen3-ASR 0.6B INT8 ONNX for broader multilingual coverage. These are local model packs, not hosted APIs.
 - **No cloud speech fallback**: no hosted speech API, no account, no telemetry, no transcript upload.
 - **Automatic backup** for every recording and transcription.
@@ -146,7 +144,7 @@ In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No 
 | `chunk_duration` | `1200` | Seconds per internal chunk for long audio |
 | `max_tokens` | `0` | `0` = auto-scale from duration. Cap for faster short-clip decode. |
 
-### WhisperKit (alternative)
+### WhisperKit
 
 Whisper on Apple Neural Engine via [Argmax](https://github.com/argmaxinc/WhisperKit). Install with `brew install whisperkit-cli`, switch with `wh engine whisperkit`.
 
@@ -163,7 +161,7 @@ Whisper on Apple Neural Engine via [Argmax](https://github.com/argmaxinc/Whisper
 
 Kokoro-82M via [kokoro-mlx](https://github.com/gabrimatic/kokoro-mlx). Runs in-process after install. No local server. Streaming playback starts before full synthesis completes.
 
-Toggle from the menu bar or Settings -> Voice. Activating the feature downloads the Kokoro voice model (~170 MB) and uses the spaCy `en_core_web_sm` dictionary plus system `espeak-ng`. Run `./setup.sh` while the toggle is on to pre-fetch everything so the first speak has no wait.
+Toggle from the menu bar or Settings -> Voice. Turning it on downloads the Kokoro voice model (~170 MB) and uses the spaCy `en_core_web_sm` dictionary plus system `espeak-ng`. Run `./setup.sh` while the toggle is on to pre-fetch the assets before the first speak.
 
 Use it from the keyboard or CLI:
 
@@ -197,7 +195,7 @@ Multiple presets available. Default is Sky (`af_sky`).
 
 ## Grammar Backends
 
-Grammar cleanup is optional. Pick a backend or leave transcription-only mode on:
+Grammar cleanup is optional. Pick a backend or keep transcription-only mode:
 
 | Backend | Requirements | Notes |
 |---------|-------------|-------|
@@ -206,7 +204,7 @@ Grammar cleanup is optional. Pick a backend or leave transcription-only mode on:
 | **LM Studio** | [LM Studio](https://lmstudio.ai) with a model loaded and the local server started | Works on any Mac |
 | **Disabled** | None | Transcription only |
 
-Switch from menu bar (instant), `wh backend <name>` (restarts), or Settings.
+Switch from the menu bar, Settings, or `wh backend <name>`. The menu bar switch is instant; the CLI switch restarts the service.
 
 <details>
 <summary><strong>Ollama setup</strong></summary>
@@ -383,7 +381,7 @@ Audio recording, transcription, replacements, and text-to-speech run on-device o
 | Ollama | localhost:11434 |
 | LM Studio | localhost:1234 by default; private LAN IPs allowed |
 
-Models cached at `~/.whisper/models/`. Config and backups at `~/.whisper/`.
+Models cache at `~/.whisper/models/`. Config, history, and backups live under `~/.whisper/`.
 
 After models and optional local services are installed, dictation and cleanup do not send audio or transcript text to cloud APIs.
 
@@ -391,7 +389,7 @@ After models and optional local services are installed, dictation and cleanup do
 
 ## Architecture
 
-Local Whisper splits runtime and UI cleanly. Python runs the headless LaunchAgent service; Swift owns the macOS UI.
+Local Whisper splits runtime and UI. Python runs the headless LaunchAgent service; Swift owns the macOS UI.
 
 ```
 Python (LaunchAgent, headless)
@@ -475,7 +473,7 @@ Enable `wh`, then `wh restart`.
 <details>
 <summary><strong>Double-tap not working</strong></summary>
 
-Tap twice within 0.4s (default). Adjust `double_tap_threshold` in config.
+Tap twice within 0.4s (default). Adjust `double_tap_threshold` in config when you want a wider or tighter window.
 
 </details>
 
@@ -545,7 +543,7 @@ pip install -e .
 
 wh build              # Build Swift UI (one-time)
 wh                    # Run the service
-pytest tests/              # Run the full test suite
+pytest tests/         # Run the full test suite
 ```
 
 ### Mobile Apps
@@ -564,7 +562,7 @@ See [docs/mobile.md](docs/mobile.md) for setup flow, keyboard behavior, model pa
 Engines: implement `TranscriptionEngine` in `engines/`, register in `ENGINE_REGISTRY`.
 Grammar backends: implement `GrammarBackend` in `backends/`, register in `BACKEND_REGISTRY`.
 
-Menu, CLI, and Settings auto-generate from the registries.
+Menu, CLI, and Settings entries come from the registries.
 
 <details>
 <summary><strong>Project structure</strong></summary>
@@ -608,7 +606,7 @@ local-whisper/
 │   │       ├── app.dart              # Tabs, record/history/modes/models/settings UI
 │   │       ├── native_speech_service.dart
 │   │       ├── model_store.dart      # Local model catalog/install state
-│   │       ├── text_polisher.dart    # Offline cleanup and modes
+│   │       ├── text_polisher.dart    # Local cleanup and modes
 │   │       ├── history_store.dart    # Local persistence
 │   │       └── models.dart
 │   ├── ios/Runner/
@@ -715,7 +713,7 @@ All other dependencies use MIT, BSD, or Apache 2.0 licenses. See each package fo
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE).
 
 ---
 
