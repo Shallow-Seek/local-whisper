@@ -61,6 +61,7 @@ struct Qwen3ASRConfig: Codable, Sendable {
     var repetitionContextSize: Int
     var repetitionPenalty: Double
     var chunkDuration: Double
+    var maxTokens: Int
 
     enum CodingKeys: String, CodingKey {
         case model, timeout, temperature
@@ -69,6 +70,7 @@ struct Qwen3ASRConfig: Codable, Sendable {
         case repetitionContextSize = "repetition_context_size"
         case repetitionPenalty = "repetition_penalty"
         case chunkDuration = "chunk_duration"
+        case maxTokens = "max_tokens"
     }
 }
 
@@ -198,6 +200,14 @@ struct BackupConfig: Codable, Sendable {
     }
 }
 
+struct ServiceConfig: Codable, Sendable {
+    var idleUnloadMinutes: Int
+
+    enum CodingKeys: String, CodingKey {
+        case idleUnloadMinutes = "idle_unload_minutes"
+    }
+}
+
 struct ShortcutsConfig: Codable, Sendable {
     var enabled: Bool
     var proofread: String
@@ -249,6 +259,7 @@ struct AppConfig: Codable, Sendable {
     var audio: AudioConfig
     var ui: UIConfig
     var backup: BackupConfig
+    var service: ServiceConfig
     var shortcuts: ShortcutsConfig
     var tts: TTSConfig
     var kokoroTts: KokoroTTSConfig
@@ -256,7 +267,7 @@ struct AppConfig: Codable, Sendable {
     var dictation: DictationConfig
 
     enum CodingKeys: String, CodingKey {
-        case hotkey, transcription, whisper, grammar, ollama, audio, ui, backup, shortcuts, tts, replacements, dictation
+        case hotkey, transcription, whisper, grammar, ollama, audio, ui, backup, service, shortcuts, tts, replacements, dictation
         case parakeet = "parakeet_v3"
         case qwen3Asr = "qwen3_asr"
         case appleIntelligence = "apple_intelligence"
@@ -269,9 +280,9 @@ struct AppConfig: Codable, Sendable {
         parakeet: ParakeetConfig, qwen3Asr: Qwen3ASRConfig,
         whisper: WhisperConfig, grammar: GrammarConfig, ollama: OllamaConfig,
         appleIntelligence: AppleIntelligenceConfig, lmStudio: LMStudioConfig,
-        audio: AudioConfig, ui: UIConfig, backup: BackupConfig, shortcuts: ShortcutsConfig,
-        tts: TTSConfig, kokoroTts: KokoroTTSConfig, replacements: ReplacementsConfig,
-        dictation: DictationConfig
+        audio: AudioConfig, ui: UIConfig, backup: BackupConfig, service: ServiceConfig,
+        shortcuts: ShortcutsConfig, tts: TTSConfig, kokoroTts: KokoroTTSConfig,
+        replacements: ReplacementsConfig, dictation: DictationConfig
     ) {
         self.hotkey = hotkey
         self.transcription = transcription
@@ -285,6 +296,7 @@ struct AppConfig: Codable, Sendable {
         self.audio = audio
         self.ui = ui
         self.backup = backup
+        self.service = service
         self.shortcuts = shortcuts
         self.tts = tts
         self.kokoroTts = kokoroTts
@@ -309,7 +321,7 @@ struct AppConfig: Codable, Sendable {
                 localAttention: false,
                 localAttentionContextSize: 256
             ),
-            qwen3Asr: Qwen3ASRConfig(model: "mlx-community/Qwen3-ASR-1.7B-bf16", timeout: 0, temperature: 0.0, topP: 1.0, topK: 0, repetitionContextSize: 100, repetitionPenalty: 1.2, chunkDuration: 1200.0),
+            qwen3Asr: Qwen3ASRConfig(model: "mlx-community/Qwen3-ASR-1.7B-bf16", timeout: 0, temperature: 0.0, topP: 1.0, topK: 0, repetitionContextSize: 100, repetitionPenalty: 1.2, chunkDuration: 1200.0, maxTokens: 0),
             whisper: WhisperConfig(
                 url: "http://localhost:50060/v1/audio/transcriptions",
                 checkUrl: "http://localhost:50060/",
@@ -350,6 +362,7 @@ struct AppConfig: Codable, Sendable {
             ),
             ui: UIConfig(showOverlay: true, overlayOpacity: 0.92, soundsEnabled: true, notificationsEnabled: false, autoPaste: false),
             backup: BackupConfig(directory: "~/.whisper", historyLimit: 100),
+            service: ServiceConfig(idleUnloadMinutes: 20),
             shortcuts: ShortcutsConfig(
                 enabled: true,
                 proofread: "ctrl+shift+g",

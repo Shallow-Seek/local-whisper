@@ -11,6 +11,7 @@ struct AdvancedPanel: View {
             Form {
                 connectionSection
                 storageSection
+                lifecycleSection
                 diagnosticsSection
                 dangerSection
             }
@@ -100,6 +101,44 @@ struct AdvancedPanel: View {
                 description: "Where Local Whisper writes audio backups, transcripts, and config."
             )
         }
+    }
+
+    // MARK: - Lifecycle
+
+    private var lifecycleSection: some View {
+        Section {
+            LabeledContent("Unload models after idle") {
+                HStack {
+                    Stepper("", value: Binding(
+                        get: { appState.config.service.idleUnloadMinutes },
+                        set: { value in
+                            appState.config.service.idleUnloadMinutes = value
+                            appState.ipcClient?.sendConfigUpdate(section: "service", key: "idle_unload_minutes", value: value)
+                        }
+                    ), in: 0...240, step: 5)
+                    .labelsHidden()
+                    Text(idleUnloadLabel)
+                        .monoStat(width: 90)
+                }
+            }
+            .help("Unload transcription and speech models after this many idle minutes. 0 keeps models loaded.")
+
+            InlineNotice(
+                kind: .info,
+                text: "Lower values free memory sooner. Higher values make the next dictation start faster."
+            )
+        } header: {
+            SettingsSectionHeader(
+                symbol: "memorychip",
+                title: "Model lifecycle",
+                description: "Balance memory pressure against first-word latency."
+            )
+        }
+    }
+
+    private var idleUnloadLabel: String {
+        let minutes = appState.config.service.idleUnloadMinutes
+        return minutes == 0 ? "Never" : "\(minutes)m"
     }
 
     // MARK: - Diagnostics

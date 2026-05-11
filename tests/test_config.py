@@ -134,6 +134,10 @@ class TestDefaultValues:
         config, _ = _load_config_from(tmp_path, toml_content="")
         assert config.backup.history_limit == 100
 
+    def test_service_idle_unload_default(self, tmp_path):
+        config, _ = _load_config_from(tmp_path, toml_content="")
+        assert config.service.idle_unload_minutes == 20
+
     def test_overlay_opacity_default(self, tmp_path):
         config, _ = _load_config_from(tmp_path, toml_content="")
         assert 0.0 < config.ui.overlay_opacity <= 1.0
@@ -188,6 +192,21 @@ class TestValidation:
         toml = "[grammar]\nbackend = \"none\"\nenabled = true\n"
         config, _ = _load_config_from(tmp_path, toml)
         assert config.grammar.enabled is False
+
+    def test_service_idle_unload_loads_from_config(self, tmp_path):
+        toml = "[service]\nidle_unload_minutes = 0\n"
+        config, _ = _load_config_from(tmp_path, toml)
+        assert config.service.idle_unload_minutes == 0
+
+    def test_negative_service_idle_unload_falls_back(self, tmp_path):
+        toml = "[service]\nidle_unload_minutes = -5\n"
+        config, _ = _load_config_from(tmp_path, toml)
+        assert config.service.idle_unload_minutes == 20
+
+    def test_boolean_service_idle_unload_falls_back(self, tmp_path):
+        toml = "[service]\nidle_unload_minutes = true\n"
+        config, _ = _load_config_from(tmp_path, toml)
+        assert config.service.idle_unload_minutes == 20
 
 
 # ---------------------------------------------------------------------------

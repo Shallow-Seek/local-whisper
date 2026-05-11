@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Made the service lifecycle setting real end-to-end: `[service].idle_unload_minutes` now loads from `config.toml`, appears in `wh config` and macOS Advanced settings, and macOS changes reschedule the running service without restart. The macOS app also now receives and exposes the English engine's `max_tokens`, and `wh config show` uses the current engine and speech defaults.
 - Kept Apple Intelligence requirement handling consistent across setup, docs, CLI metadata, and the macOS UI: public surfaces now state macOS 26+ with Apple Intelligence enabled, and setup/doctor only install the optional SDK extra on supported systems.
 - Tightened privacy wording in the package metadata and macOS onboarding/about panels so setup/model downloads are not implied to be network-free.
 - Aligned the generated default TOML and full configuration reference, including service lifecycle settings, dictation commands, and Qwen3-ASR decoding tunables.

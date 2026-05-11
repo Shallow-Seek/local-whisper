@@ -119,6 +119,7 @@ class IPCMixin:
                 "repetition_context_size": cfg.qwen3_asr.repetition_context_size,
                 "repetition_penalty": cfg.qwen3_asr.repetition_penalty,
                 "chunk_duration": cfg.qwen3_asr.chunk_duration,
+                "max_tokens": cfg.qwen3_asr.max_tokens,
             },
             "whisper": {
                 "url": cfg.whisper.url,
@@ -181,6 +182,9 @@ class IPCMixin:
             "backup": {
                 "directory": str(cfg.backup.directory),
                 "history_limit": cfg.backup.history_limit,
+            },
+            "service": {
+                "idle_unload_minutes": cfg.service.idle_unload_minutes,
             },
             "shortcuts": {
                 "enabled": cfg.shortcuts.enabled,
@@ -270,6 +274,8 @@ class IPCMixin:
                         threading.Thread(target=self._enable_tts, daemon=True).start()
                     else:
                         threading.Thread(target=self._disable_tts, daemon=True).start()
+                elif section == "service" and key == "idle_unload_minutes":
+                    self._schedule_idle_unload()
         elif msg_type == "replacement_add":
             spoken = msg.get("spoken", "").strip()
             replacement = msg.get("replacement", "").strip()

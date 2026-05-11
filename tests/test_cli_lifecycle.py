@@ -52,6 +52,24 @@ class TestLifecycleBackendStatus:
         assert lifecycle._read_config_backend_status() == "ollama"
 
 
+class TestConfigSummary:
+    def test_static_summary_uses_current_defaults(self, monkeypatch, tmp_path, capsys):
+        from whisper_voice.cli.editor import cmd_config
+
+        config_dir = tmp_path / ".whisper"
+        config_dir.mkdir(parents=True)
+        (config_dir / "config.toml").write_text("[service]\nidle_unload_minutes = 0\n", encoding="utf-8")
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        cmd_config(["show"])
+
+        out = capsys.readouterr().out
+        assert "parakeet_v3" in out
+        assert "Idle unload" in out
+        assert "never" in out
+        assert "off" in out
+
+
 class TestUptimeParsing:
     def test_parse_etime_mm_ss(self):
         from whisper_voice.cli.lifecycle import _parse_etime

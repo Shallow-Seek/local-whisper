@@ -105,7 +105,7 @@ normalize_audio = true
 pre_buffer = 0.0           # seconds before hotkey (0.0 = disabled)
 
 [service]
-idle_unload_minutes = 20   # 0 = never unload idle ML models
+idle_unload_minutes = 20   # minutes before unloading idle ML models; 0 = never
 
 [backup]
 directory = "~/.whisper"

@@ -25,6 +25,7 @@ from .schema import (
     ParakeetConfig,
     Qwen3ASRConfig,
     ReplacementsConfig,
+    ServiceConfig,
     ShortcutsConfig,
     TranscriptionConfig,
     TTSConfig,
@@ -187,6 +188,11 @@ def _validate_config(config: Config):
     if not 0.0 <= config.ui.overlay_opacity <= 1.0:
         print("Config warning: overlay_opacity must be between 0.0 and 1.0, using 0.92", file=sys.stderr)
         config.ui.overlay_opacity = 0.92
+
+    # Service validation
+    if type(config.service.idle_unload_minutes) is not int or config.service.idle_unload_minutes < 0:
+        print("Config warning: idle_unload_minutes must be 0 or a positive integer, using 20", file=sys.stderr)
+        config.service.idle_unload_minutes = 20
 
 
 def load_config() -> Config:
@@ -351,6 +357,15 @@ def load_config() -> Config:
         config.backup = BackupConfig(
             directory=data['backup'].get('directory', config.backup.directory),
             history_limit=data['backup'].get('history_limit', config.backup.history_limit),
+        )
+
+    # Service settings
+    if 'service' in data:
+        config.service = ServiceConfig(
+            idle_unload_minutes=data['service'].get(
+                'idle_unload_minutes',
+                config.service.idle_unload_minutes,
+            ),
         )
 
     # Shortcuts settings

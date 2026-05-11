@@ -43,7 +43,7 @@ def _interactive_config() -> None:
         {"type": "bool",    "label": "Enabled",          "section": "grammar",       "key": "enabled",                "value": _get("grammar", "enabled", False)},
         {"type": "choice",  "label": "Backend",          "section": "grammar",       "key": "backend",                "value": _get("grammar", "backend", "apple_intelligence"),       "options": ["apple_intelligence", "ollama", "lm_studio"]},
         {"type": "header",  "label": "Text to Speech"},
-        {"type": "bool",    "label": "Enabled",          "section": "tts",           "key": "enabled",                "value": _get("tts", "enabled", True)},
+        {"type": "bool",    "label": "Enabled",          "section": "tts",           "key": "enabled",                "value": _get("tts", "enabled", False)},
         {"type": "string",  "label": "Voice",            "section": "kokoro_tts",    "key": "voice",                  "value": _get("kokoro_tts", "voice", "af_sky"),                  "hint": "af_sky  bf_emma  am_adam"},
         {"type": "string",  "label": "Shortcut",         "section": "tts",           "key": "speak_shortcut",         "value": _get("tts", "speak_shortcut", "alt+t")},
         {"type": "header",  "label": "UI"},
@@ -51,6 +51,8 @@ def _interactive_config() -> None:
         {"type": "bool",    "label": "Overlay",          "section": "ui",            "key": "show_overlay",           "value": _get("ui", "show_overlay", True)},
         {"type": "bool",    "label": "Sounds",           "section": "ui",            "key": "sounds_enabled",         "value": _get("ui", "sounds_enabled", True)},
         {"type": "bool",    "label": "Notifications",    "section": "ui",            "key": "notifications_enabled",  "value": _get("ui", "notifications_enabled", False)},
+        {"type": "header",  "label": "Service"},
+        {"type": "int",     "label": "Idle unload",      "section": "service",       "key": "idle_unload_minutes",    "value": _get("service", "idle_unload_minutes", 20),             "hint": "min  0=never"},
         {"type": "header",  "label": "Shortcuts"},
         {"type": "bool",    "label": "Enabled",          "section": "shortcuts",     "key": "enabled",                "value": _get("shortcuts", "enabled", True)},
         {"type": "header",  "label": "Replacements"},
@@ -228,7 +230,12 @@ def _interactive_config() -> None:
         if not v:
             return ("", DM)
         try:
-            item["value"] = float(v) if item["type"] == "float" else v
+            if item["type"] == "float":
+                item["value"] = float(v)
+            elif item["type"] == "int":
+                item["value"] = int(v)
+            else:
+                item["value"] = v
         except ValueError:
             return ("invalid value", YL)
         ok = _save(item)
@@ -275,13 +282,16 @@ def cmd_config(args: list):
             except Exception as e:
                 print(f"{C_RED}Error reading config: {e}{C_RESET}", file=sys.stderr)
                 return
-            engine = data.get("transcription", {}).get("engine", "qwen3_asr")
+            engine = data.get("transcription", {}).get("engine", "parakeet_v3")
             language = data.get(engine, {}).get("language", "auto")
             def _on_off(v): return f"{C_GREEN}on{C_RESET}" if v else f"{C_DIM}off{C_RESET}"
             print()
             print(f"  {C_DIM}Engine{C_RESET}      {C_GREEN}{engine}{C_RESET}  {C_DIM}({language}){C_RESET}")
             print(f"  {C_DIM}Grammar{C_RESET}     {_on_off(data.get('grammar',{}).get('enabled',False))}  {C_DIM}{data.get('grammar',{}).get('backend','')}{C_RESET}")
-            print(f"  {C_DIM}TTS{C_RESET}         {_on_off(data.get('tts',{}).get('enabled',True))}  {C_DIM}{data.get('kokoro_tts',{}).get('voice','af_sky')}{C_RESET}")
+            print(f"  {C_DIM}TTS{C_RESET}         {_on_off(data.get('tts',{}).get('enabled',False))}  {C_DIM}{data.get('kokoro_tts',{}).get('voice','af_sky')}{C_RESET}")
+            idle = data.get("service", {}).get("idle_unload_minutes", 20)
+            idle_label = "never" if idle == 0 else f"{idle}m"
+            print(f"  {C_DIM}Idle unload{C_RESET} {C_GREEN}{idle_label}{C_RESET}")
             print(f"  {C_DIM}Hotkey{C_RESET}      {data.get('hotkey',{}).get('key','alt_r').replace('_',' ')}")
             print()
             print(f"  {C_DIM}{config_path}{C_RESET}")

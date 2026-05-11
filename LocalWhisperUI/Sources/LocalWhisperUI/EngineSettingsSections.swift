@@ -307,6 +307,22 @@ struct Qwen3Section: View {
                 }
                 .help("Maximum chunk size for very long audio. Default 1200s (20 minutes).")
 
+                LabeledContent("Max tokens") {
+                    HStack {
+                        Stepper("", value: Binding(
+                            get: { appState.config.qwen3Asr.maxTokens },
+                            set: { v in
+                                appState.config.qwen3Asr.maxTokens = v
+                                appState.ipcClient?.sendConfigUpdate(section: "qwen3_asr", key: "max_tokens", value: v)
+                            }
+                        ), in: 0...4096, step: 64)
+                        .labelsHidden()
+                        Text(appState.config.qwen3Asr.maxTokens == 0 ? "Default" : "\(appState.config.qwen3Asr.maxTokens)")
+                            .monoStat(width: 70)
+                    }
+                }
+                .help("Maximum decoded tokens per request. 0 uses the engine default.")
+
                 LabeledContent("Timeout") {
                     HStack {
                         Stepper("", value: Binding(

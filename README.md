@@ -342,7 +342,7 @@ Sidebar layout with focused panels:
 | Output | Overlay, sounds, notifications, paste-at-cursor, history limit |
 | Shortcuts | Proofread / rewrite / prompt-engineer keybindings, full cheatsheet |
 | Activity | Sessions, words, 30-day chart, top words, top replacement triggers |
-| Advanced | Storage paths, service log, doctor, restart, update |
+| Advanced | Storage paths, model idle unload, service log, doctor, restart, update |
 | About | Version, credits, replay tutorial |
 
 Settings save to `~/.whisper/config.toml`. Restart-required fields warn and offer immediate restart.
@@ -361,6 +361,7 @@ Common fields:
 | `[transcription]` | Active engine: `parakeet_v3`, `qwen3_asr`, or `whisperkit` |
 | `[grammar]` | Grammar backend and enable/disable state |
 | `[audio]` | VAD, noise reduction, normalization, pre-buffer, and duration limits |
+| `[service]` | Idle model unload timing for memory versus next-dictation latency |
 | `[ui]` | Overlay, sounds, notifications, and auto-paste |
 | `[tts]` | Text-to-speech toggle and shortcut |
 

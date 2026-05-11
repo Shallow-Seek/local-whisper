@@ -10,6 +10,7 @@ The helpers below mirror the real payload shapes emitted by the service in
 """
 
 import json
+from types import SimpleNamespace
 
 # ---------------------------------------------------------------------------
 # Helpers: message constructors that mirror the real Python→Swift payloads.
@@ -213,6 +214,19 @@ class TestConfigSnapshot:
         msg = make_config_snapshot(grammar_enabled=True)
         parsed = json.loads(json.dumps(msg))
         assert isinstance(parsed["config"]["grammar"]["enabled"], bool)
+
+    def test_production_snapshot_includes_service_lifecycle_settings(self):
+        from whisper_voice.app_ipc import IPCMixin
+        from whisper_voice.config.schema import Config
+
+        sent = []
+        fake = SimpleNamespace(config=Config(), ipc=SimpleNamespace(send=sent.append))
+
+        IPCMixin._send_config_snapshot(fake)
+
+        payload = sent[-1]["config"]
+        assert payload["service"]["idle_unload_minutes"] == 20
+        assert payload["qwen3_asr"]["max_tokens"] == 0
 
 
 # ---------------------------------------------------------------------------
