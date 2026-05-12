@@ -103,3 +103,12 @@ def test_android_keyboard_honors_quick_insert_setting():
     assert "if (quickInsertEnabled())" in keyboard
     assert '"[Clean] "' in keyboard
     assert '"[Prompt] "' in keyboard
+
+
+def test_pydantic_core_pin_matches_pydantic_runtime_requirement():
+    """The packaged Kokoro path must not ship mismatched pydantic-core wheels."""
+    pyproject = tomllib.loads(_read("pyproject.toml"))
+    dependencies = set(pyproject["project"]["dependencies"])
+
+    assert "pydantic==2.12.5" in dependencies
+    assert "pydantic-core==2.41.5" in dependencies
