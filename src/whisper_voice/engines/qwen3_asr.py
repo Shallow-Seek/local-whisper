@@ -4,7 +4,7 @@
 Qwen3-ASR transcription engine for Local Whisper.
 
 Uses qwen3-asr-mlx to run Qwen3-ASR locally via MLX, supporting up to 20 minutes
-of audio natively without chunking. English-only.
+of audio natively without chunking. Language detection is handled by the model.
 """
 
 import concurrent.futures
@@ -18,7 +18,6 @@ from ..utils import log
 from .base import TranscriptionEngine
 
 _DEFAULT_MODEL = "mlx-community/Qwen3-ASR-1.7B-bf16"
-_LANGUAGE = "English"
 
 
 def _quick_duration(path: str) -> Optional[float]:
@@ -103,7 +102,6 @@ class Qwen3ASREngine(TranscriptionEngine):
             timeout = getattr(qwen3_cfg, "timeout", self._timeout) if qwen3_cfg else self._timeout
 
             kwargs: dict = {
-                "language": _LANGUAGE,
                 "temperature": getattr(qwen3_cfg, "temperature", 0.0) if qwen3_cfg else 0.0,
                 "top_p": getattr(qwen3_cfg, "top_p", 1.0) if qwen3_cfg else 1.0,
                 "top_k": getattr(qwen3_cfg, "top_k", 0) if qwen3_cfg else 0,

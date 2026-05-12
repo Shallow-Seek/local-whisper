@@ -131,9 +131,9 @@ In-process via [parakeet-mlx](https://github.com/senstella/parakeet-mlx). No ser
 | `beam_size` / `length_penalty` / `patience` / `duration_reward` | `5` / `0.013` / `3.5` / `0.67` | Beam-only tuning knobs. |
 | `local_attention` | `false` | Reduces peak RAM for unchunked long audio. |
 
-### Qwen3-ASR (English only)
+### Qwen3-ASR
 
-In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No local server. Native long-audio support, up to 20 minutes in a single pass. English only. Switch with `wh engine qwen3_asr`.
+In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No local server. Native long-audio support, up to 20 minutes in a single pass. Qwen3-ASR detects language from the audio. Switch with `wh engine qwen3_asr`.
 
 | Setting | Default | Notes |
 |---------|---------|-------|

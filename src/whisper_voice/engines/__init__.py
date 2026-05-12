@@ -58,7 +58,7 @@ ENGINE_REGISTRY: Dict[str, EngineInfo] = {
     "qwen3_asr": EngineInfo(
         id="qwen3_asr",
         name="Qwen3-ASR",
-        description="On-device MLX transcription, English only",
+        description="On-device MLX transcription with language auto-detection",
         factory=_create_qwen3_asr,
     ),
     "whisperkit": EngineInfo(

@@ -48,7 +48,7 @@ struct MenuBarView: View {
         // All the pieces that turn a recording into clean text.
         Picker(transcriptionModelMenuTitle, selection: engineBinding) {
             Text("Parakeet-TDT v3 (multilingual)").tag("parakeet_v3")
-            Text("Qwen3-ASR (English only)").tag("qwen3_asr")
+            Text("Qwen3-ASR (auto-detect)").tag("qwen3_asr")
             Text("WhisperKit (local server)").tag("whisperkit")
         }
         .help("The AI model that converts your speech into text.")

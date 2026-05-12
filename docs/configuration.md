@@ -29,6 +29,7 @@ local_attention = false
 local_attention_context_size = 256
 
 [qwen3_asr]
+# Language is auto-detected by Qwen3-ASR.
 model = "mlx-community/Qwen3-ASR-1.7B-bf16"
 timeout = 0                # 0 = no limit
 temperature = 0.0

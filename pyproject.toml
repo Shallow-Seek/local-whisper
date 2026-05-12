@@ -32,8 +32,8 @@ dependencies = [
     "pyobjc-framework-Cocoa>=12.1",
     "pyobjc-framework-Quartz>=12.1",
     "parakeet-mlx>=0.5.1",
-    "qwen3-asr-mlx>=0.1.0",
-    "kokoro-mlx>=0.1.0",
+    "qwen3-asr-mlx>=0.1.1",
+    "kokoro-mlx>=0.1.2",
     "soundfile>=0.13.1",
     "misaki[en]>=0.9.4",
     # Kokoro/misaki pull pydantic through spaCy. Keep the core wheel

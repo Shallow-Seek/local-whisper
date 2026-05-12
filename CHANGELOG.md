@@ -4,6 +4,13 @@ This changelog tracks notable Local Whisper changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Updated the Qwen3-ASR and Kokoro MLX package requirements to the current published releases.
+- Let Qwen3-ASR use model-side language detection instead of forcing English.
+
 ## [1.6.3] - 2026-05-12
 
 ### Fixed

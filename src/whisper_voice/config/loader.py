@@ -436,7 +436,7 @@ def _migrate_legacy_default_engine(content: str) -> str:
     content = content.replace(
         '# Transcription engine: "qwen3_asr" (default) or "whisperkit"\nengine = "qwen3_asr"',
         '# Transcription engine: "parakeet_v3" (default, multilingual),\n'
-        '# "qwen3_asr" (English only), or "whisperkit"\n'
+        '# "qwen3_asr" (auto-detect), or "whisperkit"\n'
         'engine = "parakeet_v3"',
         1,
     )

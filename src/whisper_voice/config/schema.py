@@ -33,7 +33,7 @@ double_tap_threshold = 0.4
 
 [transcription]
 # Transcription engine: "parakeet_v3" (default, multilingual),
-# "qwen3_asr" (English only), or "whisperkit"
+# "qwen3_asr" (auto-detect), or "whisperkit"
 engine = "parakeet_v3"
 
 [parakeet_v3]
