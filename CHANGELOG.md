@@ -4,6 +4,12 @@ This changelog tracks notable Local Whisper changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.8] - 2026-05-26
+
+### Added
+
+- Added hold-to-record paste output: holding the trigger key records until release and pastes the transcription at the active cursor, while double-tap recordings keep the normal clipboard output unless auto-paste is enabled.
+
 ## [1.6.7] - 2026-05-17
 
 ### Fixed
