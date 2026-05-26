@@ -3391,15 +3391,16 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppPalette.surface,
+    return Material(
+      color: AppPalette.surface,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
-      child: child,
+      child: SizedBox(
+        width: double.infinity,
+        child: Padding(padding: const EdgeInsets.all(16), child: child),
+      ),
     );
   }
 }
