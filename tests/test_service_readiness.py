@@ -63,13 +63,14 @@ def test_retry_reloads_idle_model_before_transcribing(monkeypatch, tmp_path):
             self._busy = False
             self._current_status = ""
             self.reloads = 0
+            self.saved_history = []
             self.grammar = None
             self.backup = SimpleNamespace(
                 get_audio=lambda: tmp_path / "last_recording.wav",
                 save_text=lambda text: None,
-                save_history=lambda raw, final: None,
+                save_history=lambda raw, final: self.saved_history.append((raw, final)),
             )
-            self.transcriber = SimpleNamespace(transcribe=lambda path: ("hello", None))
+            self.transcriber = SimpleNamespace(transcribe=lambda path: ("um hello", None))
             self.config = SimpleNamespace(
                 grammar=SimpleNamespace(enabled=False),
                 replacements=SimpleNamespace(enabled=False, rules={}),
@@ -102,6 +103,7 @@ def test_retry_reloads_idle_model_before_transcribing(monkeypatch, tmp_path):
     monkeypatch.setattr("whisper_voice.app_pipeline.play_sound", lambda *args, **kwargs: None)
     monkeypatch.setattr("whisper_voice.app_pipeline.send_notification", lambda *args, **kwargs: None)
     monkeypatch.setattr("whisper_voice.app_pipeline.threading.Timer", lambda *args, **kwargs: SimpleNamespace(start=lambda: None))
+    monkeypatch.setattr("whisper_voice.app_pipeline.apply_dictation_commands", lambda text: "hello")
     monkeypatch.setattr(app, "_deliver_transcription_text", lambda *args, **kwargs: True)
 
     app._retry(None)
@@ -111,3 +113,4 @@ def test_retry_reloads_idle_model_before_transcribing(monkeypatch, tmp_path):
         time.sleep(0.01)
 
     assert app.reloads == 1
+    assert app.saved_history == [("um hello", "hello")]

@@ -4,6 +4,17 @@ This changelog tracks notable Local Whisper changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.12] - 2026-05-29
+
+### Added
+
+- Added a deterministic speech-filler filter for live dictation and `wh listen`, removing high-confidence fillers such as "um", "uh", "ah", "er", and pause-like "oh" before grammar correction.
+
+### Fixed
+
+- Kept meaningful phrases such as "uh oh" and "oh no" intact while filtering fillers.
+- Made Retry Last run through the same dictation cleanup pass as normal recordings while preserving the original raw transcript in history.
+
 ## [1.6.11] - 2026-05-29
 
 ### Added

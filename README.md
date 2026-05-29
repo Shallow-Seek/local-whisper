@@ -343,6 +343,8 @@ Speak these phrases anywhere in a dictation and Local Whisper replaces them with
 
 Custom commands go under `[dictation.commands]` in `~/.whisper/config.toml`. The pass runs before grammar correction, so grammar sees well-punctuated sentences.
 
+The same deterministic pass also drops high-confidence speech fillers such as "um", "uh", "ah", "er", and pause-like "oh" from live dictation and `wh listen`. It preserves common meaningful phrases such as "uh oh" and "oh no". This does not require grammar correction or any AI backend.
+
 ### Menu Bar Controls
 
 The menu bar does not drive normal dictation. The global hotkey does. Use the menu bar for state and controls:

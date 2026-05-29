@@ -91,15 +91,38 @@ def apply_dictation_commands(
     """
     if not text:
         return text
+    explicit_commands = commands is not None
     if commands is None:
         cfg = get_config()
         if not getattr(cfg, "dictation", None) or not cfg.dictation.enabled:
             return text
         commands = dict(DEFAULT_COMMANDS)
         commands.update(cfg.dictation.commands or {})
-    if not commands:
+    if explicit_commands and not commands:
         return text
+    text = strip_speech_fillers(text)
+    if not commands:
+        return _collapse_whitespace(text)
     return _apply(text, commands)
+
+
+def strip_speech_fillers(text: str) -> str:
+    """Remove high-confidence spoken fillers from dictation text.
+
+    This is intentionally deterministic and conservative. It removes isolated
+    disfluencies such as "um", "uh", "ah", "er", and pause-like "oh" while
+    preserving common meaningful phrases such as "uh oh" and "oh no".
+    """
+    if not text:
+        return text
+
+    text, protected = _protect_meaningful_oh_phrases(text)
+    text = _remove_contextual_oh(text)
+    text = _remove_filler_words(text, _FILLER_WORD_FRAGMENT)
+    text = _cleanup_filler_spacing(text)
+    for marker, value in protected:
+        text = text.replace(marker, value)
+    return _collapse_whitespace(text)
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +139,72 @@ def _apply(text: str, commands: Dict[str, str]) -> str:
         text = _substitute_one(text, phrase, replacement)
     text = _collapse_whitespace(text)
     text = _apply_scratch(text)
+    return text
+
+
+_FILLER_WORD_FRAGMENT = (
+    r"(?:u+h+|u+h+m+|u+m+|a+h+|e+r+|e+r+m+|h+m+|m+h*m+|m+m+)"
+)
+_WORD_LEFT = r"(?<![\w'-])"
+_WORD_RIGHT = r"(?![\w'-])"
+_OH_RE = re.compile(r"(?i)(?<![\w'-])oh+(?![\w'-])")
+_KEEP_OH_NEXT_WORDS = {
+    "dear",
+    "god",
+    "goodness",
+    "my",
+    "no",
+    "wow",
+    "well",
+    "yeah",
+    "yes",
+}
+_MEANINGFUL_OH_PHRASE_RE = re.compile(
+    r"(?i)(?<![\w'-])(?:uh[\s-]+oh|oh\s*,?\s*(?:"
+    + "|".join(sorted(_KEEP_OH_NEXT_WORDS))
+    + r"))(?![\w'-])"
+)
+
+
+def _protect_meaningful_oh_phrases(text: str) -> tuple[str, list[tuple[str, str]]]:
+    protected: list[tuple[str, str]] = []
+
+    def replace(match: re.Match) -> str:
+        marker = f"__LW_DICTATION_KEEP_{len(protected)}__"
+        protected.append((marker, match.group(0)))
+        return marker
+
+    return _MEANINGFUL_OH_PHRASE_RE.sub(replace, text), protected
+
+
+def _remove_contextual_oh(text: str) -> str:
+    def replace(match: re.Match) -> str:
+        tail = text[match.end():]
+        next_word = re.match(r"\s*,?\s*([A-Za-z']+)", tail)
+        if next_word and next_word.group(1).lower() in _KEEP_OH_NEXT_WORDS:
+            return match.group(0)
+        return ""
+
+    return _OH_RE.sub(replace, text)
+
+
+def _remove_filler_words(text: str, word_fragment: str) -> str:
+    word = _WORD_LEFT + word_fragment + _WORD_RIGHT
+    # Remove comma-wrapped fillers as a clause: "I think, um, we go" -> "I think we go".
+    text = re.sub(rf"(?i)(?<=\w)\s*,\s*{word}\s*,\s*(?=\w)", " ", text)
+    # Remove leading fillers and their pause punctuation.
+    text = re.sub(rf"(?i)^\s*{word}\s*[,;:.!?-]*\s*", "", text)
+    # Remove remaining standalone fillers, plus lightweight trailing pause punctuation.
+    text = re.sub(rf"(?i){word}\s*[,;:]*", "", text)
+    return text
+
+
+def _cleanup_filler_spacing(text: str) -> str:
+    # Deleting a filler can leave orphaned comma/colon separators.
+    text = re.sub(r"^\s*[,;:]\s*", "", text)
+    text = re.sub(r"\s+([.!?])", r"\1", text)
+    text = re.sub(r"\s*,\s*([.!?])", r"\1", text)
+    text = re.sub(r"([,;:])\s*([,;:])", r"\2", text)
     return text
 
 

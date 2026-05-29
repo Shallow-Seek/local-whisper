@@ -285,6 +285,8 @@ enabled = false
 [dictation]
 # Voice dictation commands (say "new line", "period", "comma", etc. and the
 # spoken phrase is replaced with the literal punctuation or whitespace).
+# This pass also removes high-confidence speech fillers such as "um", "uh",
+# "ah", "er", and pause-like "oh" before grammar correction.
 # Defaults: new line, new paragraph, period, comma, question mark,
 # exclamation mark, colon, semicolon, dash, hyphen, ellipsis, open/close paren,
 # open/close quote, scratch that, strike that.

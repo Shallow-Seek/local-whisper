@@ -465,6 +465,8 @@ class PipelineMixin:
                     self._show_error(err, f"Failed: {err}")
                     return
 
+                original_raw = raw_text
+                raw_text = self._apply_dictation_commands(raw_text)
                 self._check_grammar_connection()
                 final_text = self._apply_grammar(raw_text)
 
@@ -481,7 +483,7 @@ class PipelineMixin:
 
                 self._show_success(final_text, pasted=should_paste)
                 self.backup.save_text(final_text)
-                self.backup.save_history(raw_text, final_text)
+                self.backup.save_history(original_raw, final_text)
             finally:
                 with self._state_lock:
                     self._busy = False
