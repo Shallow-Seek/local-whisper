@@ -5,6 +5,9 @@ Regression tests for CLI lifecycle config reporting.
 """
 
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 
 def _write_config(tmp_path: Path, grammar_enabled: bool, backend: str = "apple_intelligence") -> None:
@@ -129,3 +132,131 @@ class TestPendingWorkSummary:
 
         monkeypatch.setenv("HOME", str(tmp_path))
         assert lifecycle._pending_work_summary() is None
+
+
+class TestEngineSwitchModelPreparation:
+    def test_cmd_engine_prefetches_managed_model_before_writing_config(self, monkeypatch):
+        from whisper_voice.cli import settings
+
+        calls = []
+        monkeypatch.setattr(
+            settings,
+            "_list_engines",
+            lambda: {
+                "qwen3_asr": SimpleNamespace(
+                    description="On-device MLX transcription",
+                )
+            },
+        )
+        monkeypatch.setattr(settings, "_is_running", lambda: (False, None))
+        monkeypatch.setattr(settings, "_ensure_engine_ready_for_cli", lambda engine: calls.append(("ensure", engine)), raising=False)
+        monkeypatch.setattr(settings, "_write_config_engine", lambda engine: calls.append(("write", engine)) or True)
+
+        settings.cmd_engine(["qwen3_asr"])
+
+        assert calls == [("ensure", "qwen3_asr"), ("write", "qwen3_asr")]
+
+    def test_cmd_engine_does_not_write_config_when_prefetch_fails(self, monkeypatch):
+        from whisper_voice.cli import settings
+
+        writes = []
+        monkeypatch.setattr(
+            settings,
+            "_list_engines",
+            lambda: {
+                "qwen3_asr": SimpleNamespace(
+                    description="On-device MLX transcription",
+                )
+            },
+        )
+        monkeypatch.setattr(settings, "_is_running", lambda: (False, None))
+
+        def fail_prefetch(_engine):
+            raise RuntimeError("network down")
+
+        monkeypatch.setattr(settings, "_ensure_engine_ready_for_cli", fail_prefetch, raising=False)
+        monkeypatch.setattr(settings, "_write_config_engine", lambda engine: writes.append(engine) or True)
+
+        with pytest.raises(SystemExit):
+            settings.cmd_engine(["qwen3_asr"])
+
+        assert writes == []
+
+    def test_cli_whisperkit_switch_requires_cli_before_config_write(self, monkeypatch):
+        from whisper_voice.cli import settings
+        from whisper_voice.engines import whisperkit_runtime
+
+        calls = []
+        monkeypatch.setattr(
+            whisperkit_runtime,
+            "require_whisperkit_cli",
+            lambda: calls.append("check") or "/opt/homebrew/bin/whisperkit-cli",
+        )
+        monkeypatch.setattr(
+            settings,
+            "_list_engines",
+            lambda: {
+                "whisperkit": SimpleNamespace(
+                    description="Local WhisperKit server",
+                )
+            },
+        )
+        monkeypatch.setattr(settings, "_is_running", lambda: (False, None))
+        monkeypatch.setattr(settings, "_write_config_engine", lambda engine: calls.append(("write", engine)) or True)
+
+        settings.cmd_engine(["whisperkit"])
+
+        assert calls == ["check", ("write", "whisperkit")]
+
+    def test_cli_whisperkit_switch_does_not_write_config_when_cli_missing(self, monkeypatch):
+        from whisper_voice.cli import settings
+        from whisper_voice.engines import whisperkit_runtime
+
+        writes = []
+
+        def fail_check():
+            raise RuntimeError("WhisperKit CLI is not installed. Run: wh doctor --fix")
+
+        monkeypatch.setattr(whisperkit_runtime, "require_whisperkit_cli", fail_check)
+        monkeypatch.setattr(
+            settings,
+            "_list_engines",
+            lambda: {
+                "whisperkit": SimpleNamespace(
+                    description="Local WhisperKit server",
+                )
+            },
+        )
+        monkeypatch.setattr(settings, "_is_running", lambda: (False, None))
+        monkeypatch.setattr(settings, "_write_config_engine", lambda engine: writes.append(engine) or True)
+
+        with pytest.raises(SystemExit):
+            settings.cmd_engine(["whisperkit"])
+
+        assert writes == []
+
+    def test_cmd_engine_rolls_back_when_restarted_service_never_becomes_ready(self, monkeypatch):
+        from whisper_voice.cli import build, doctor, settings
+
+        writes = []
+        restarts = []
+        monkeypatch.setattr(
+            settings,
+            "_list_engines",
+            lambda: {
+                "parakeet_v3": SimpleNamespace(description="On-device Parakeet"),
+                "whisperkit": SimpleNamespace(description="Local WhisperKit server"),
+            },
+        )
+        monkeypatch.setattr(settings, "_read_config_engine", lambda: "parakeet_v3")
+        monkeypatch.setattr(settings, "_is_running", lambda: (True, 123))
+        monkeypatch.setattr(settings, "_ensure_engine_ready_for_cli", lambda engine: None)
+        monkeypatch.setattr(settings, "_write_config_engine", lambda engine: writes.append(engine) or True)
+        monkeypatch.setattr(build, "cmd_restart", lambda: restarts.append("restart"))
+        monkeypatch.setattr(doctor, "_wait_for_service_ready", lambda timeout=180.0: False)
+
+        with pytest.raises(SystemExit):
+            settings.cmd_engine(["whisperkit"])
+
+        assert writes == ["whisperkit", "parakeet_v3"]
+        assert restarts == ["restart", "restart"]

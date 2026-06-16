@@ -110,6 +110,10 @@ class TestDefaultValues:
         config, _ = _load_config_from(tmp_path, toml_content="")
         assert "bf16" in config.qwen3_asr.model
 
+    def test_whisperkit_best_model_default(self, tmp_path):
+        config, _ = _load_config_from(tmp_path, toml_content="")
+        assert config.whisper.model == "large-v3-v20240930_626MB"
+
     def test_repetition_context_size_default(self, tmp_path):
         config, _ = _load_config_from(tmp_path, toml_content="")
         assert config.qwen3_asr.repetition_context_size == 100

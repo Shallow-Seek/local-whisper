@@ -44,6 +44,33 @@ def test_engine_status_requires_complete_snapshot_files(monkeypatch, tmp_path):
     assert state["size_mb"] > 0
 
 
+def test_engine_status_uses_configured_qwen_model_cache(monkeypatch, tmp_path):
+    import whisper_voice.engines.status as status_mod
+
+    monkeypatch.setattr(status_mod, "MODEL_DIR", tmp_path)
+    monkeypatch.setattr(
+        "whisper_voice.config.get_config",
+        lambda: SimpleNamespace(
+            qwen3_asr=SimpleNamespace(model="mlx-community/Qwen3-ASR-1.7B-8bit"),
+        ),
+    )
+    snapshot = (
+        tmp_path
+        / "models--mlx-community--Qwen3-ASR-1.7B-8bit"
+        / "snapshots"
+        / "abc123"
+    )
+    snapshot.mkdir(parents=True)
+    (snapshot / "config.json").write_text("{}", encoding="utf-8")
+    (snapshot / "model.safetensors").write_bytes(b"weights")
+
+    state = status_mod.engine_model_status("qwen3_asr")
+
+    assert state["downloaded"] is True
+    assert state["hf_repo"] == "mlx-community/Qwen3-ASR-1.7B-8bit"
+    assert state["cache_dir"].endswith("models--mlx-community--Qwen3-ASR-1.7B-8bit")
+
+
 def test_download_watcher_reports_aggregate_cache_bytes(tmp_path):
     from whisper_voice.engines.download_progress import DownloadWatcher
 
@@ -214,6 +241,113 @@ def test_engine_switch_download_failure_keeps_current_engine_loaded(monkeypatch,
     assert all(call.args[0] == "idle" for call in app._send_state_update.call_args_list)
 
 
+def test_whisperkit_switch_install_failure_keeps_current_engine_loaded(monkeypatch):
+    import whisper_voice.app_switching as switching_mod
+    from whisper_voice.app_switching import SwitchingMixin
+
+    class DummyApp(SwitchingMixin):
+        pass
+
+    old_transcriber = SimpleNamespace(close=Mock())
+    app = DummyApp()
+    app._busy = False
+    app._state_lock = threading.Lock()
+    app._download_cancel_lock = threading.Lock()
+    app._download_cancel_events = {}
+    app.config = SimpleNamespace(transcription=SimpleNamespace(engine="parakeet_v3"))
+    app.transcriber = old_transcriber
+    app.recorder = SimpleNamespace(recording=False)
+    app.ipc = SimpleNamespace(send=Mock())
+    app._current_status = "Ready"
+    app._send_state_update = Mock()
+    app._send_state_error = Mock()
+    app._send_engines_status = Mock()
+    app._send_config_snapshot = Mock()
+
+    monkeypatch.setattr(
+        switching_mod,
+        "engine_model_status",
+        Mock(return_value={
+            "downloaded": False,
+            "cache_dir": None,
+            "hf_repo": None,
+        }),
+    )
+    monkeypatch.setattr(
+        switching_mod,
+        "require_whisperkit_cli",
+        Mock(side_effect=RuntimeError("brew unavailable")),
+    )
+
+    app._switch_engine("whisperkit")
+
+    old_transcriber.close.assert_not_called()
+    assert app.transcriber is old_transcriber
+    assert app._settings_operation_active is False
+    assert app._busy is False
+    app._send_config_snapshot.assert_not_called()
+
+
+def test_engine_switch_failure_rolls_back_pending_model_config(monkeypatch, tmp_path):
+    import whisper_voice.app_switching as switching_mod
+    import whisper_voice.config as config_mod
+    from whisper_voice.app_switching import SwitchingMixin
+
+    class FakeWatcher:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def start(self):
+            pass
+
+        def set_phase(self, phase):
+            pass
+
+        def finish(self, error=None, phase=None):
+            pass
+
+    class DummyApp(SwitchingMixin):
+        pass
+
+    old_transcriber = SimpleNamespace(close=Mock())
+    app = DummyApp()
+    app._busy = False
+    app._state_lock = threading.Lock()
+    app._download_cancel_lock = threading.Lock()
+    app._download_cancel_events = {}
+    app.config = SimpleNamespace(transcription=SimpleNamespace(engine="qwen3_asr"))
+    app.transcriber = old_transcriber
+    app.recorder = SimpleNamespace(recording=False)
+    app.ipc = SimpleNamespace(send=Mock())
+    app._current_status = "Ready"
+    app._send_state_update = Mock()
+    app._send_state_error = Mock()
+    app._send_engines_status = Mock()
+    app._send_config_snapshot = Mock()
+    app._prefetch_hf_snapshot = Mock(return_value=(False, "network down"))
+
+    monkeypatch.setattr(
+        switching_mod,
+        "engine_model_status",
+        Mock(return_value={
+            "downloaded": False,
+            "cache_dir": str(tmp_path / "models--org--model"),
+            "hf_repo": "org/model",
+        }),
+    )
+    monkeypatch.setattr(switching_mod, "DownloadWatcher", FakeWatcher)
+    updates = []
+    monkeypatch.setattr(config_mod, "update_config_field", lambda *args: updates.append(args))
+    monkeypatch.setattr(switching_mod, "get_config", lambda: app.config)
+
+    app._switch_engine("qwen3_asr", ("qwen3_asr", "model", "old/model"))
+
+    assert ("qwen3_asr", "model", "old/model") in updates
+    old_transcriber.close.assert_not_called()
+    assert app.transcriber is old_transcriber
+    app._send_config_snapshot.assert_called_once()
+
+
 def test_settings_operation_busy_snapshot_stays_idle():
     from whisper_voice.app_ipc import IPCMixin
 
@@ -294,3 +428,104 @@ def test_engine_switch_registers_cancel_before_first_progress(monkeypatch, tmp_p
     assert any("download canceled" in (call.kwargs.get("status_text") or "").lower()
                for call in app._send_state_update.call_args_list)
     assert app._download_cancel_events == {}
+
+
+def test_transcriber_start_prefetches_managed_model_before_engine_load(monkeypatch):
+    import whisper_voice.transcriber as transcriber_mod
+
+    calls = []
+
+    class FakeEngine:
+        name = "Qwen3-ASR"
+
+        def start(self):
+            calls.append("start")
+            return True
+
+        def running(self):
+            return True
+
+        def transcribe(self, path):
+            return "ok", None
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(transcriber_mod, "create_engine", lambda engine_id: FakeEngine())
+    monkeypatch.setattr(
+        transcriber_mod,
+        "ensure_engine_model_cached",
+        lambda engine_id: calls.append(("ensure", engine_id)),
+        raising=False,
+    )
+
+    transcriber = transcriber_mod.Transcriber(engine_id="qwen3_asr")
+
+    assert transcriber.start() is True
+    assert calls == [("ensure", "qwen3_asr"), "start"]
+
+
+def test_transcriber_normalizes_string_paths_before_engine_call(monkeypatch, tmp_path):
+    import whisper_voice.transcriber as transcriber_mod
+
+    seen = []
+
+    class FakeEngine:
+        name = "Qwen3-ASR"
+
+        def start(self):
+            return True
+
+        def running(self):
+            return True
+
+        def transcribe(self, path):
+            seen.append(path)
+            return "ok", None
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(transcriber_mod, "create_engine", lambda engine_id: FakeEngine())
+    monkeypatch.setattr(transcriber_mod, "ensure_engine_model_cached", lambda engine_id: None)
+
+    transcriber = transcriber_mod.Transcriber(engine_id="qwen3_asr")
+    audio_path = tmp_path / "audio.wav"
+
+    assert transcriber.transcribe(str(audio_path)) == ("ok", None)
+    assert seen == [audio_path]
+
+
+def test_whisperkit_engine_start_does_not_install_cli(monkeypatch):
+    import whisper_voice.engines.whisperkit as whisperkit_mod
+    from whisper_voice.engines.whisperkit import WhisperKitEngine
+
+    monkeypatch.setattr(
+        whisperkit_mod,
+        "get_config",
+        lambda: SimpleNamespace(
+            whisper=SimpleNamespace(
+                check_url="http://localhost:50060/health",
+                model="large-v3-v20240930_626MB",
+            ),
+        ),
+    )
+    monkeypatch.setattr(WhisperKitEngine, "running", lambda self: False)
+    monkeypatch.setattr(
+        whisperkit_mod,
+        "require_whisperkit_cli",
+        Mock(side_effect=RuntimeError("WhisperKit CLI is not installed. Run: wh doctor --fix")),
+    )
+    popen = Mock()
+    monkeypatch.setattr(whisperkit_mod.subprocess, "Popen", popen)
+
+    engine = WhisperKitEngine()
+
+    try:
+        engine.start()
+    except RuntimeError as exc:
+        assert "wh doctor --fix" in str(exc)
+    else:
+        raise AssertionError("expected missing WhisperKit CLI to fail")
+
+    popen.assert_not_called()

@@ -74,12 +74,12 @@ class ModelStore {
       kind: ModelKind.transcription,
       description:
           'WhisperKit/Core ML transcription pack for private offline recording on iPhone.',
-      sizeLabel: '~550 MB Core ML pack',
+      sizeLabel: '~626 MB Core ML pack',
       state: ModelInstallState.notInstalled,
       runtime: ModelRuntime.whisperKit,
       minimumIosMajor: 14,
       repoId: 'argmaxinc/whisperkit-coreml',
-      snapshotPath: 'openai_whisper-large-v3-v20240930_547MB',
+      snapshotPath: 'openai_whisper-large-v3-v20240930_626MB',
       installNote:
           'WhisperKit large-v3 Core ML pack used by the native iOS recorder.',
     ),
@@ -370,6 +370,7 @@ class ModelStore {
           'name': model.name,
           'repoId': repoId,
           'revision': model.revision,
+          'snapshotPath': model.snapshotPath,
           'runtime': model.runtime.name,
           'minimumIosMajor': model.minimumIosMajor,
           'files': [
@@ -636,10 +637,27 @@ class ModelStore {
       if (decoded['id'] != model.id || decoded['repoId'] != model.repoId) {
         return false;
       }
+      final expectedSnapshot = model.snapshotPath;
+      if (expectedSnapshot != null && expectedSnapshot.isNotEmpty) {
+        final manifestSnapshot = decoded['snapshotPath'] as String?;
+        if (manifestSnapshot != null && manifestSnapshot != expectedSnapshot) {
+          return false;
+        }
+      }
       final files = decoded['files'];
       if (files is! List || files.isEmpty) return false;
       for (final item in files) {
         if (item is! Map) return false;
+        final sourcePath = item['sourcePath'] as String?;
+        final expectedSnapshot = model.snapshotPath;
+        if (expectedSnapshot != null && expectedSnapshot.isNotEmpty) {
+          final prefix = expectedSnapshot.endsWith('/')
+              ? expectedSnapshot
+              : '$expectedSnapshot/';
+          if (sourcePath == null || !sourcePath.startsWith(prefix)) {
+            return false;
+          }
+        }
         final relativePath = item['path'] as String?;
         final expectedSize = (item['size'] as num?)?.toInt() ?? 0;
         if (relativePath == null || relativePath.isEmpty) return false;

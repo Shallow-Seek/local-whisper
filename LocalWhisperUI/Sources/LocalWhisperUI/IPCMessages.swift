@@ -325,7 +325,7 @@ struct AppConfig: Codable, Sendable {
             whisper: WhisperConfig(
                 url: "http://localhost:50060/v1/audio/transcriptions",
                 checkUrl: "http://localhost:50060/",
-                model: "whisper-large-v3-v20240930",
+                model: "large-v3-v20240930_626MB",
                 language: "auto",
                 timeout: 0,
                 prompt: "",

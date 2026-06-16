@@ -17,6 +17,28 @@ from .lifecycle import (
 )
 
 
+def _ensure_engine_ready_for_cli(engine_id: str) -> None:
+    """Prepare managed engine weights before writing config/restarting."""
+    if engine_id == "whisperkit":
+        from whisper_voice.engines.whisperkit_runtime import require_whisperkit_cli
+
+        require_whisperkit_cli()
+        return
+
+    from whisper_voice.engines.status import engine_model_status, ensure_engine_model_cached
+
+    status = engine_model_status(engine_id)
+    if status.get("cache_dir") is None:
+        return
+    if status.get("downloaded", False):
+        return
+    repo = status.get("hf_repo") or engine_id
+    download_status = status.get("download_status") or "missing"
+    verb = "Resuming" if download_status == "partial" else "Downloading"
+    print(f"{C_DIM}{verb} model:{C_RESET} {repo}")
+    ensure_engine_model_cached(engine_id)
+
+
 def cmd_backend(args: list):
     """Show or switch backend."""
     backends = _list_backends()
@@ -84,6 +106,14 @@ def cmd_engine(args: list):
         print(f"{C_DIM}Available: {available}{C_RESET}", file=sys.stderr)
         sys.exit(1)
 
+    previous_engine = _read_config_engine()
+
+    try:
+        _ensure_engine_ready_for_cli(new_engine)
+    except Exception as exc:
+        print(f"{C_RED}Could not prepare engine model:{C_RESET} {exc}", file=sys.stderr)
+        sys.exit(1)
+
     if not _write_config_engine(new_engine):
         sys.exit(1)
 
@@ -93,7 +123,19 @@ def cmd_engine(args: list):
     if running:
         print(f"{C_DIM}Restarting service...{C_RESET}")
         from .build import cmd_restart
+        from .doctor import _wait_for_service_ready
+
         cmd_restart()
+        if not _wait_for_service_ready():
+            if previous_engine and previous_engine != new_engine:
+                print(
+                    f"{C_YELLOW}Service did not become ready; rolling back to {previous_engine}...{C_RESET}",
+                    file=sys.stderr,
+                )
+                if _write_config_engine(previous_engine):
+                    cmd_restart()
+                    _wait_for_service_ready(timeout=60.0)
+            sys.exit(1)
     else:
         print(f"{C_DIM}Service not running - start with: wh start{C_RESET}")
 

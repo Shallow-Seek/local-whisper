@@ -305,8 +305,16 @@ class Recorder:
     def _wait_for_live_input(self) -> bool:
         if self._input_warmup_timeout <= 0:
             return True
-        if not self._input_ready.wait(timeout=self._input_warmup_timeout):
-            return False
+        deadline = time.monotonic() + self._input_warmup_timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                break
+            self._input_ready.wait(timeout=remaining)
+            with self._input_health_lock:
+                if self._input_has_signal:
+                    return True
+                self._input_ready.clear()
         with self._input_health_lock:
             return self._input_has_signal
 

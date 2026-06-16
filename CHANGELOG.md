@@ -4,6 +4,27 @@ This changelog tracks notable Local Whisper changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.6.13] - 2026-06-16
+
+### Added
+
+- Added WhisperKit large-v3 `large-v3-v20240930_626MB` as the best-accuracy desktop and mobile WhisperKit preset.
+- Added managed WhisperKit CLI discovery and doctor repair so `wh doctor --fix` can install the local WhisperKit runtime dependency.
+
+### Changed
+
+- Updated dependencies across Python, Flutter, iOS, and Android, including Pydantic 2.13.4, Parakeet MLX 0.5.2, PyObjC 12.2, SoundFile 0.14.0, Apple Foundation Models SDK 0.2.0, Sherpa ONNX 1.13.3, Android Gradle Plugin 8.13.2, and Kotlin 2.4.0.
+- Updated Flutter model validation so stale WhisperKit snapshot folders are rejected and redownloaded instead of being treated as installed.
+
+### Fixed
+
+- Fixed post-sleep and stale microphone recovery by resetting the audio host on wake resync and closing a warmup event race that could miss the first live input signal.
+- Fixed source/Homebrew LaunchAgent conflicts that could make macOS ask for permissions on multiple Python runtime identities.
+- Fixed engine switching so managed model downloads and active model edits roll back instead of leaving `config.toml` pointing at a failed engine or model.
+- Fixed `wh engine` so it waits for the restarted service to become ready and rolls back if the new engine cannot start.
+- Fixed `wh transcribe` with WhisperKit by normalizing CLI string paths before engine invocation.
+- Fixed WhisperKit runtime startup to use installed local CLI paths without adding `mlx-audio` or cloud transcription fallbacks.
+
 ## [1.6.12] - 2026-05-29
 
 ### Added

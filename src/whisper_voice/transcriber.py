@@ -24,6 +24,7 @@ from typing import Optional, Tuple
 
 from .config import get_config
 from .engines import TranscriptionEngine, create_engine
+from .engines.status import ensure_engine_model_cached
 from .utils import log
 
 
@@ -37,6 +38,7 @@ class Transcriber:
     def __init__(self, engine_id: str = None):
         if engine_id is None:
             engine_id = get_config().transcription.engine
+        self._engine_id = engine_id
         try:
             self._engine: TranscriptionEngine = create_engine(engine_id)
             log(f"Transcription engine: {self._engine.name}", "INFO")
@@ -46,13 +48,18 @@ class Transcriber:
 
     def start(self) -> bool:
         """Initialize and verify engine availability."""
+        try:
+            ensure_engine_model_cached(self._engine_id)
+        except Exception as e:
+            log(f"Failed to prepare {self._engine.name} model: {e}", "ERR")
+            return False
         return self._engine.start()
 
     def running(self) -> bool:
         """Check if the engine is ready to accept transcription requests."""
         return self._engine.running()
 
-    def transcribe(self, path: Path) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path | str) -> Tuple[Optional[str], Optional[str]]:
         """
         Transcribe an audio file.
 
@@ -64,7 +71,7 @@ class Transcriber:
             On success, error_message is None.
             On error, text is None and error_message describes the failure.
         """
-        return self._engine.transcribe(path)
+        return self._engine.transcribe(Path(path))
 
     def unload(self) -> None:
         """Release engine model from RAM. Call start() to reload."""

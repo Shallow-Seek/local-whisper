@@ -466,9 +466,9 @@ if [[ -d "$SWIFT_UI_DIR" ]]; then
     <key>CFBundleName</key>
     <string>Local Whisper</string>
     <key>CFBundleVersion</key>
-    <string>1.6.12</string>
+    <string>1.6.13</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.6.12</string>
+    <string>1.6.13</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <key>LSUIElement</key>
@@ -507,6 +507,13 @@ log_step "Adding the background service..."
 
 # Legacy cleanup
 osascript -e 'tell application "System Events" to delete (login items whose name is "Local Whisper")' 2>/dev/null || true
+if command -v brew &> /dev/null; then
+    brew services stop local-whisper 2>/dev/null || true
+fi
+if [[ -f "$HOME/Library/LaunchAgents/homebrew.mxcl.local-whisper.plist" ]]; then
+    launchctl unload "$HOME/Library/LaunchAgents/homebrew.mxcl.local-whisper.plist" 2>/dev/null || true
+    rm -f "$HOME/Library/LaunchAgents/homebrew.mxcl.local-whisper.plist"
+fi
 if [[ -f "$HOME/Library/LaunchAgents/info.gabrimatic.local-whisper.plist" ]]; then
     launchctl unload "$HOME/Library/LaunchAgents/info.gabrimatic.local-whisper.plist" 2>/dev/null || true
     rm -f "$HOME/Library/LaunchAgents/info.gabrimatic.local-whisper.plist"

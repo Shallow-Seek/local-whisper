@@ -258,6 +258,10 @@ class IPCMixin:
             value = msg.get("value")
             if section and key and value is not None:
                 from .config import update_config_field
+                old_value = None
+                section_config = getattr(self.config, section, None)
+                if section_config is not None:
+                    old_value = getattr(section_config, key, None)
                 update_config_field(section, key, value)
                 self.config = get_config()
                 self._send_config_snapshot()
@@ -283,6 +287,21 @@ class IPCMixin:
                         threading.Thread(target=self._disable_tts, daemon=True).start()
                 elif section == "service" and key == "idle_unload_minutes":
                     self._schedule_idle_unload()
+                elif section in ("parakeet_v3", "qwen3_asr") and key == "model":
+                    self._send_engines_status()
+                    if section == self.config.transcription.engine:
+                        threading.Thread(
+                            target=self._switch_engine,
+                            args=(section, (section, key, old_value)),
+                            daemon=True,
+                        ).start()
+                elif section == "whisper" and key == "model":
+                    if self.config.transcription.engine == "whisperkit":
+                        threading.Thread(
+                            target=self._switch_engine,
+                            args=("whisperkit", (section, key, old_value)),
+                            daemon=True,
+                        ).start()
         elif msg_type == "replacement_add":
             spoken = msg.get("spoken", "").strip()
             replacement = msg.get("replacement", "").strip()

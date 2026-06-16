@@ -126,7 +126,7 @@ void main() {
         'minimumIosMajor': 14,
         'files': [
           {
-            'sourcePath': 'openai_whisper-large-v3-v20240930_547MB/config.json',
+            'sourcePath': 'openai_whisper-large-v3-v20240930_626MB/config.json',
             'path': 'config.json',
             'size': await config.length(),
           },
@@ -162,6 +162,69 @@ void main() {
 
     expect(whisperKit.state, ModelInstallState.installed);
     expect(whisperKit.localPath, modelDir.path);
+  });
+
+  test('model state rejects stale WhisperKit snapshot installs', () async {
+    final tempDir = await Directory.systemTemp.createTemp(
+      'local-whisper-model-stale-snapshot-',
+    );
+    addTearDown(() async {
+      if (await tempDir.exists()) {
+        await tempDir.delete(recursive: true);
+      }
+      SharedPreferences.resetStatic();
+    });
+
+    final modelDir = Directory('${tempDir.path}/whisperkit_large_v3_turbo');
+    await modelDir.create(recursive: true);
+    final config = File('${modelDir.path}/config.json');
+    await config.writeAsString('{"model":"test"}');
+    await File('${modelDir.path}/local-whisper-model.json').writeAsString(
+      jsonEncode({
+        'id': 'whisperkit_large_v3_turbo',
+        'name': 'WhisperKit Large v3',
+        'repoId': 'argmaxinc/whisperkit-coreml',
+        'revision': 'main',
+        'runtime': 'whisperKit',
+        'minimumIosMajor': 14,
+        'files': [
+          {
+            'sourcePath': 'openai_whisper-large-v3-v20240930_547MB/config.json',
+            'path': 'config.json',
+            'size': await config.length(),
+          },
+        ],
+      }),
+    );
+
+    SharedPreferences.resetStatic();
+    SharedPreferences.setMockInitialValues({
+      'models.v1': jsonEncode([
+        for (final model in ModelStore.catalog)
+          model.id == 'whisperkit_large_v3_turbo'
+              ? model
+                    .copyWith(
+                      state: ModelInstallState.installed,
+                      localPath: modelDir.path,
+                      installedBytes: await config.length(),
+                      installedFiles: 1,
+                      progress: 1,
+                    )
+                    .toJson()
+              : model.toJson(),
+      ]),
+    });
+
+    final models = await ModelStore(
+      HistoryStore(),
+      modelDirectory: tempDir,
+    ).loadModels();
+    final whisperKit = models.firstWhere(
+      (model) => model.id == 'whisperkit_large_v3_turbo',
+    );
+
+    expect(whisperKit.state, ModelInstallState.notInstalled);
+    expect(whisperKit.localPath, isEmpty);
   });
 
   test(
@@ -235,7 +298,11 @@ void main() {
           'id': 'whisperkit_large_v3_turbo',
           'repoId': 'argmaxinc/whisperkit-coreml',
           'files': [
-            {'path': 'config.json', 'size': await modelFile.length()},
+            {
+              'sourcePath': 'openai_whisper-large-v3-v20240930_626MB/config.json',
+              'path': 'config.json',
+              'size': await modelFile.length(),
+            },
           ],
         }),
       );
@@ -290,7 +357,7 @@ void main() {
             jsonEncode([
               {
                 'type': 'file',
-                'path': 'openai_whisper-large-v3-v20240930_547MB/config.json',
+                'path': 'openai_whisper-large-v3-v20240930_626MB/config.json',
                 'size': payload.length,
               },
             ]),

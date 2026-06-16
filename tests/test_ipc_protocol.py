@@ -285,6 +285,92 @@ class TestIncomingMessageParsing:
         msg = json.loads(raw)
         assert msg["value"] == "mlx-community/Qwen3-ASR-1.7B-8bit"
 
+    def test_active_engine_model_update_reloads_engine(self, monkeypatch):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+
+        import whisper_voice.app_ipc as app_ipc
+        import whisper_voice.config as config_mod
+        from whisper_voice.app_ipc import IPCMixin
+
+        class ImmediateThread:
+            def __init__(self, target, args=(), kwargs=None, daemon=None):
+                self.target = target
+                self.args = args
+                self.kwargs = kwargs or {}
+
+            def start(self):
+                self.target(*self.args, **self.kwargs)
+
+        class FakeApp(IPCMixin):
+            pass
+
+        app = FakeApp()
+        app.config = SimpleNamespace(
+            transcription=SimpleNamespace(engine="qwen3_asr"),
+            qwen3_asr=SimpleNamespace(model="mlx-community/Qwen3-ASR-1.7B-bf16"),
+        )
+        app._send_config_snapshot = Mock()
+        app._send_engines_status = Mock()
+        app._switch_engine = Mock()
+
+        monkeypatch.setattr(app_ipc.threading, "Thread", ImmediateThread)
+        monkeypatch.setattr(app_ipc, "get_config", lambda: app.config)
+        monkeypatch.setattr(config_mod, "update_config_field", Mock())
+
+        app._handle_ipc_message(
+            make_config_update("qwen3_asr", "model", "mlx-community/Qwen3-ASR-1.7B-8bit")
+        )
+
+        app._switch_engine.assert_called_once_with(
+            "qwen3_asr",
+            ("qwen3_asr", "model", "mlx-community/Qwen3-ASR-1.7B-bf16"),
+        )
+        app._send_engines_status.assert_called_once()
+
+    def test_active_whisperkit_model_update_reloads_engine(self, monkeypatch):
+        from types import SimpleNamespace
+        from unittest.mock import Mock
+
+        import whisper_voice.app_ipc as app_ipc
+        import whisper_voice.config as config_mod
+        from whisper_voice.app_ipc import IPCMixin
+
+        class ImmediateThread:
+            def __init__(self, target, args=(), kwargs=None, daemon=None):
+                self.target = target
+                self.args = args
+                self.kwargs = kwargs or {}
+
+            def start(self):
+                self.target(*self.args, **self.kwargs)
+
+        class FakeApp(IPCMixin):
+            pass
+
+        app = FakeApp()
+        app.config = SimpleNamespace(
+            transcription=SimpleNamespace(engine="whisperkit"),
+            whisper=SimpleNamespace(model="large-v3-v20240930_turbo_632MB"),
+        )
+        app._send_config_snapshot = Mock()
+        app._send_engines_status = Mock()
+        app._switch_engine = Mock()
+
+        monkeypatch.setattr(app_ipc.threading, "Thread", ImmediateThread)
+        monkeypatch.setattr(app_ipc, "get_config", lambda: app.config)
+        monkeypatch.setattr(config_mod, "update_config_field", Mock())
+
+        app._handle_ipc_message(
+            make_config_update("whisper", "model", "large-v3-v20240930_626MB")
+        )
+
+        app._switch_engine.assert_called_once_with(
+            "whisperkit",
+            ("whisper", "model", "large-v3-v20240930_turbo_632MB"),
+        )
+        app._send_engines_status.assert_not_called()
+
     def test_parse_config_update_bool_value(self):
         raw = json.dumps(make_config_update("grammar", "enabled", False))
         msg = json.loads(raw)

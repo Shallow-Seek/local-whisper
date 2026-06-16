@@ -21,13 +21,11 @@ MODEL_DIR = Path.home() / ".whisper" / "models"
 ENGINE_MODEL_MAP: Dict[str, Dict[str, object]] = {
     "parakeet_v3": {
         "hf_repo": "mlx-community/parakeet-tdt-0.6b-v3",
-        "cache_dir": "models--mlx-community--parakeet-tdt-0.6b-v3",
         "warm_sentinel": ".parakeet_v3_warmed",
         "required_files": ("config.json", "model.safetensors"),
     },
     "qwen3_asr": {
         "hf_repo": "mlx-community/Qwen3-ASR-1.7B-bf16",
-        "cache_dir": "models--mlx-community--Qwen3-ASR-1.7B-bf16",
         "warm_sentinel": ".qwen3_warmed",
         "required_files": ("config.json", "model.safetensors"),
     },
@@ -86,6 +84,40 @@ def hf_cache_complete(cache_path: Path, required_files: Iterable[str]) -> bool:
     return False
 
 
+def hf_cache_dir_name(hf_repo: str) -> str:
+    """Return Hugging Face's cache folder name for a repo id."""
+    return "models--" + hf_repo.replace("/", "--")
+
+
+def _configured_hf_repo(engine_id: str) -> Optional[str]:
+    try:
+        from ..config import get_config
+
+        cfg = get_config()
+        if engine_id == "parakeet_v3":
+            return str(cfg.parakeet.model)
+        if engine_id == "qwen3_asr":
+            return str(cfg.qwen3_asr.model)
+    except Exception:
+        pass
+    info = ENGINE_MODEL_MAP.get(engine_id)
+    return str(info["hf_repo"]) if info and info.get("hf_repo") else None
+
+
+def engine_model_metadata(engine_id: str) -> Optional[Dict[str, object]]:
+    """Return managed HF model metadata for an engine using current config."""
+    info = ENGINE_MODEL_MAP.get(engine_id)
+    if info is None:
+        return None
+    hf_repo = _configured_hf_repo(engine_id) or str(info["hf_repo"])
+    return {
+        "hf_repo": hf_repo,
+        "cache_dir": hf_cache_dir_name(hf_repo),
+        "warm_sentinel": info["warm_sentinel"],
+        "required_files": tuple(info.get("required_files", ())),
+    }
+
+
 def engine_model_status(engine_id: str) -> Dict:
     """Return cache status for a single engine.
 
@@ -96,7 +128,7 @@ def engine_model_status(engine_id: str) -> Dict:
       cache_dir:  str|None -- absolute path to the HF cache folder
       hf_repo:    str|None -- which HF repo the engine uses
     """
-    info = ENGINE_MODEL_MAP.get(engine_id)
+    info = engine_model_metadata(engine_id)
     if info is None:
         return {
             "downloaded": False,
@@ -123,6 +155,42 @@ def engine_model_status(engine_id: str) -> Dict:
     }
 
 
+def ensure_engine_model_cached(engine_id: str) -> None:
+    """Download a managed engine's HF snapshot if it is missing or partial."""
+    info = engine_model_metadata(engine_id)
+    if info is None:
+        return
+    status = engine_model_status(engine_id)
+    if status.get("downloaded", False):
+        return
+
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    old_cache = os.environ.get("HF_HUB_CACHE")
+    old_telemetry = os.environ.get("HF_HUB_DISABLE_TELEMETRY")
+    old_offline = os.environ.pop("HF_HUB_OFFLINE", None)
+    os.environ["HF_HUB_CACHE"] = str(MODEL_DIR)
+    os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+    try:
+        from huggingface_hub import snapshot_download
+
+        snapshot_download(repo_id=str(info["hf_repo"]), cache_dir=str(MODEL_DIR))
+    finally:
+        if old_cache is None:
+            os.environ.pop("HF_HUB_CACHE", None)
+        else:
+            os.environ["HF_HUB_CACHE"] = old_cache
+        if old_telemetry is None:
+            os.environ.pop("HF_HUB_DISABLE_TELEMETRY", None)
+        else:
+            os.environ["HF_HUB_DISABLE_TELEMETRY"] = old_telemetry
+        if old_offline is not None:
+            os.environ["HF_HUB_OFFLINE"] = old_offline
+
+    refreshed = engine_model_status(engine_id)
+    if not refreshed.get("downloaded", False):
+        raise RuntimeError(f"{engine_id} model download did not finish cleanly")
+
+
 def all_engine_statuses(active_id: Optional[str]) -> Dict[str, Dict]:
     """Return a mapping of engine_id → status dict, including `active` flag."""
     from . import ENGINE_REGISTRY
@@ -139,7 +207,7 @@ def all_engine_statuses(active_id: Optional[str]) -> Dict[str, Dict]:
 
 def remove_engine_cache(engine_id: str) -> bool:
     """Delete the on-disk weights + warm sentinel for an engine. Returns True if anything removed."""
-    info = ENGINE_MODEL_MAP.get(engine_id)
+    info = engine_model_metadata(engine_id)
     if info is None:
         return False
     removed = False

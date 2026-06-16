@@ -152,7 +152,7 @@ Results go to clipboard. Text-transform shortcuts require grammar correction to 
 
 ## Transcription Engines
 
-Switch via Settings, `wh engine <name>`, or config. Settings shows whether each managed MLX model is downloaded, partial, or missing. Downloads stay inside the Transcription panel with progress and a cancel button; the dictation overlay is reserved for recording, transcription, speech, and result states.
+Switch via Settings, `wh engine <name>`, or config. Settings shows whether each managed model is downloaded, partial, or missing. Downloads stay inside the Transcription panel with progress and a cancel button; the dictation overlay is reserved for recording, transcription, speech, and result states.
 
 ### Parakeet-TDT v3 (default)
 
@@ -183,14 +183,15 @@ In-process via [qwen3-asr-mlx](https://github.com/gabrimatic/qwen3-asr-mlx). No 
 
 ### WhisperKit
 
-Whisper on Apple Neural Engine via [Argmax](https://github.com/argmaxinc/WhisperKit). Install with `brew install whisperkit-cli`, switch with `wh engine whisperkit`.
+Whisper on Apple Neural Engine via [Argmax](https://github.com/argmaxinc/WhisperKit). Install the local CLI with `wh doctor --fix` or `brew install whisperkit-cli`, then switch with `wh engine whisperkit`.
 
 | Model | Notes |
 |-------|-------|
 | `tiny` / `tiny.en` | Fastest, lowest accuracy |
 | `base` / `base.en` | |
 | `small` / `small.en` | |
-| `whisper-large-v3-v20240930` | Accuracy-focused default |
+| `large-v3-v20240930_626MB` | Best accuracy default, recommended by Argmax for maximum multilingual accuracy |
+| `large-v3-v20240930_turbo_632MB` | Faster high-accuracy option |
 
 ---
 

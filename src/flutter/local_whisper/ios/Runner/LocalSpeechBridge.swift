@@ -350,7 +350,7 @@ final class LocalSpeechBridge: NSObject, FlutterStreamHandler {
   private func whisperKitModelName(for model: String) throws -> String {
     switch model {
     case "whisperkit_large_v3_turbo":
-      return "large-v3-v20240930_547MB"
+      return "large-v3-v20240930_626MB"
     case "qwen3_asr", "parakeet_tdt_v3":
       throw NSError(
         domain: "LocalWhisper",

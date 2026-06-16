@@ -354,6 +354,15 @@ struct Qwen3Section: View {
 struct WhisperKitSection: View {
     @Environment(AppState.self) private var appState
 
+    private let modelPresets: [(id: String, label: String)] = [
+        ("large-v3-v20240930_626MB", "Best accuracy"),
+        ("large-v3-v20240930_turbo_632MB", "Fast accuracy"),
+        ("large-v3-v20240930_turbo", "Fast"),
+        ("large-v3-v20240930", "Large v3"),
+        ("small", "Small"),
+        ("base", "Base"),
+    ]
+
     var body: some View {
         Section {
             LabeledContent("Server URL") {
@@ -375,6 +384,15 @@ struct WhisperKitSection: View {
             }
 
             RestartNote()
+
+            Picker("Preset", selection: modelPresetBinding) {
+                ForEach(modelPresets, id: \.id) { preset in
+                    Text(preset.label).tag(preset.id)
+                }
+                Text("Custom").tag("custom")
+            }
+            .pickerStyle(.menu)
+            .help("Argmax recommends Large v3 626 MB for maximum multilingual accuracy.")
 
             LabeledContent("Model") {
                 DeferredTextField(label: "Model", initialValue: appState.config.whisper.model) { value in
@@ -533,5 +551,20 @@ struct WhisperKitSection: View {
                 description: "Posts 30-second clips to a local server. Supports many languages."
             )
         }
+    }
+
+    private var modelPresetBinding: Binding<String> {
+        Binding(
+            get: {
+                modelPresets.contains { $0.id == appState.config.whisper.model }
+                    ? appState.config.whisper.model
+                    : "custom"
+            },
+            set: { value in
+                guard value != "custom" else { return }
+                appState.config.whisper.model = value
+                appState.ipcClient?.sendConfigUpdate(section: "whisper", key: "model", value: value)
+            }
+        )
     }
 }

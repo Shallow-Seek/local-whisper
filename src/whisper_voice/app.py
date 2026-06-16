@@ -610,6 +610,13 @@ def _terminate_duplicate_services():
 def service_main():
     """Entry point for the service (launched via LaunchAgent or wh start)."""
     _setup_service_logging()
+    log(
+        "Runtime identity: "
+        f"executable={sys.executable} "
+        f"realpath={os.path.realpath(sys.executable)} "
+        f"prefix={sys.prefix}",
+        "INFO",
+    )
 
     # Older installs shipped a LaunchAgent plist that hard-pinned
     # HF_HUB_OFFLINE=1, which blocked on-demand downloads when users switched

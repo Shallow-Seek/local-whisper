@@ -55,6 +55,21 @@ def test_user_facing_privacy_copy_allows_setup_network_access():
         assert "everything runs on your mac" not in content, path
 
 
+def test_project_does_not_use_mlx_audio_runtime():
+    """Transcription support must not depend on mlx-audio."""
+    checked_paths = [
+        "pyproject.toml",
+        "setup.sh",
+        "src/whisper_voice/engines/__init__.py",
+        "src/whisper_voice/engines/status.py",
+    ]
+
+    for path in checked_paths:
+        content = _read(path).lower()
+        assert "mlx-audio" not in content, path
+        assert "mlx_audio" not in content, path
+
+
 def test_recommended_install_path_uses_homebrew_and_guided_setup():
     """Recommended install copy should lead with one command and finish with wh setup."""
     readme = _read("README.md")
@@ -199,6 +214,7 @@ def test_pydantic_core_pin_matches_pydantic_runtime_requirement():
     pyproject = tomllib.loads(_read("pyproject.toml"))
     dependencies = set(pyproject["project"]["dependencies"])
 
-    assert "pyobjc-framework-AVFoundation>=12.1" in dependencies
-    assert "pydantic==2.12.5" in dependencies
-    assert "pydantic-core==2.41.5" in dependencies
+    assert "pyobjc-framework-AVFoundation>=12.2" in dependencies
+    assert "pyobjc-framework-ApplicationServices>=12.2" in dependencies
+    assert "pydantic==2.13.4" in dependencies
+    assert "pydantic-core==2.46.4" in dependencies

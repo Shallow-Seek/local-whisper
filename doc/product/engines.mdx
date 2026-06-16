@@ -41,16 +41,20 @@ WhisperKit uses a local server at `localhost:50060`.
 Install it separately:
 
 ```bash
-brew install whisperkit-cli
+wh doctor --fix
 wh engine whisperkit
 ```
 
+You can also install the CLI directly with `brew install whisperkit-cli`.
+
 | Setting | Default | Notes |
 | --- | --- | --- |
-| `model` | `whisper-large-v3-v20240930` | Accuracy-focused default. |
+| `model` | `large-v3-v20240930_626MB` | Best accuracy default. Argmax recommends this variant for maximum multilingual accuracy. |
 | `language` | `auto` | Auto-detect unless set. |
 | `url` | `http://localhost:50060/v1/audio/transcriptions` | Local transcription endpoint. |
 | `check_url` | `http://localhost:50060/` | Health check. |
+
+Settings also exposes WhisperKit presets for `large-v3-v20240930_turbo_632MB`, `large-v3-v20240930_turbo`, `large-v3-v20240930`, `small`, and `base`, plus a custom model field.
 
 ## Adding an engine
 

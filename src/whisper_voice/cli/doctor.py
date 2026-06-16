@@ -158,8 +158,10 @@ def cmd_doctor(args: list):
 
     # 3. Core Python packages
     missing_pkgs = []
-    for pkg in ["sounddevice", "numpy", "pynput", "AVFoundation", "parakeet_mlx",
-                "qwen3_asr_mlx", "kokoro_mlx", "requests", "soundfile", "misaki"]:
+    for pkg in [
+        "sounddevice", "numpy", "pynput", "AVFoundation", "parakeet_mlx",
+        "qwen3_asr_mlx", "kokoro_mlx", "requests", "soundfile", "misaki",
+    ]:
         try:
             __import__(pkg)
         except ImportError:
@@ -281,49 +283,66 @@ def cmd_doctor(args: list):
     except Exception:
         active_engine = "parakeet_v3"
 
-    engine_model_map = {
-        "parakeet_v3": (
-            "Parakeet-TDT v3",
-            "models--mlx-community--parakeet-tdt-0.6b-v3",
-            "from parakeet_mlx import from_pretrained; "
-            "from_pretrained('mlx-community/parakeet-tdt-0.6b-v3')",
-        ),
-        "qwen3_asr": (
-            "Qwen3-ASR",
-            "models--mlx-community--Qwen3-ASR-1.7B-bf16",
-            "from qwen3_asr_mlx import Qwen3ASR; "
-            "Qwen3ASR.from_pretrained('mlx-community/Qwen3-ASR-1.7B-bf16')",
-        ),
-    }
+    try:
+        from whisper_voice.engines import ENGINE_REGISTRY
+        from whisper_voice.engines.status import engine_model_status
+        from whisper_voice.engines.whisperkit_runtime import (
+            ensure_whisperkit_cli_installed,
+            whisperkit_cli_path,
+        )
 
-    if active_engine in engine_model_map:
-        label, dir_name, fetch_cmd = engine_model_map[active_engine]
-        model_path = MODEL_DIR / dir_name
-        if model_path.is_dir():
-            _doctor_pass(f"{label} model (active engine)")
-        else:
-            hint = "Run: wh doctor --fix" if not fix else ""
-            _doctor_fail(f"{label} model not found", hint)
-            if fix:
-                _doctor_fixing(f"Downloading {label} model...")
-                MODEL_DIR.mkdir(parents=True, exist_ok=True)
-                model_env = os.environ.copy()
-                model_env["HF_HUB_CACHE"] = str(MODEL_DIR)
-                model_env["HF_HUB_DISABLE_TELEMETRY"] = "1"
-                model_env["HF_HUB_OFFLINE"] = "0"
-                result = subprocess.run(
-                    [python, "-c", fetch_cmd],
-                    env=model_env, capture_output=True, timeout=600,
-                )
-                if result.returncode == 0:
-                    _doctor_pass(f"{label} model downloaded")
-                else:
-                    _doctor_fail(f"{label} model download failed")
-                    core_ok = False
+        status = engine_model_status(active_engine)
+        if active_engine == "whisperkit":
+            if whisperkit_cli_path():
+                _doctor_pass("WhisperKit CLI (active engine)")
             else:
-                core_ok = False
-    else:
-        _doctor_info(f"Active engine '{active_engine}' manages its own model")
+                hint = "Run: wh doctor --fix" if not fix else ""
+                _doctor_fail("WhisperKit CLI not installed for active engine", hint)
+                if fix:
+                    _doctor_fixing("brew install whisperkit-cli")
+                    try:
+                        ensure_whisperkit_cli_installed()
+                        _doctor_pass("WhisperKit CLI installed")
+                    except Exception:
+                        _doctor_fail("WhisperKit CLI install failed")
+                        core_ok = False
+                else:
+                    core_ok = False
+        elif status.get("cache_dir"):
+            label = ENGINE_REGISTRY.get(active_engine).name if active_engine in ENGINE_REGISTRY else active_engine
+            repo = status.get("hf_repo") or active_engine
+            if status.get("downloaded"):
+                _doctor_pass(f"{label} model (active engine)")
+            else:
+                hint = "Run: wh doctor --fix" if not fix else ""
+                _doctor_fail(f"{label} model not ready ({repo})", hint)
+                if fix:
+                    _doctor_fixing(f"Downloading {label} model...")
+                    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+                    model_env = os.environ.copy()
+                    model_env["HF_HUB_CACHE"] = str(MODEL_DIR)
+                    model_env["HF_HUB_DISABLE_TELEMETRY"] = "1"
+                    model_env.pop("HF_HUB_OFFLINE", None)
+                    result = subprocess.run(
+                        [
+                            python,
+                            "-c",
+                            "from whisper_voice.engines.status import ensure_engine_model_cached; "
+                            f"ensure_engine_model_cached({active_engine!r})",
+                        ],
+                        env=model_env, capture_output=True, timeout=600,
+                    )
+                    if result.returncode == 0:
+                        _doctor_pass(f"{label} model downloaded")
+                    else:
+                        _doctor_fail(f"{label} model download failed")
+                        core_ok = False
+                else:
+                    core_ok = False
+        else:
+            _doctor_info(f"Active engine '{active_engine}' manages its own model")
+    except Exception:
+        _doctor_warn("Could not inspect active model cache")
 
     # 8. Kokoro TTS model (only required when TTS is enabled)
     if tts_enabled:
@@ -395,13 +414,40 @@ def cmd_doctor(args: list):
                 _doctor_warn("Swift UI build failed (service works without it)")
 
     # 11. LaunchAgent / Homebrew service
+    brew_plist = Path.home() / "Library" / "LaunchAgents" / "homebrew.mxcl.local-whisper.plist"
     if install_method == INSTALL_BREW:
-        brew_plist = Path.home() / "Library" / "LaunchAgents" / "homebrew.mxcl.local-whisper.plist"
+        if LAUNCHAGENT_PLIST.exists():
+            _doctor_warn(
+                "Source LaunchAgent also exists",
+                f"Unload/remove {LAUNCHAGENT_PLIST} so macOS grants permissions to one runtime",
+            )
+            if fix:
+                subprocess.run(["launchctl", "unload", str(LAUNCHAGENT_PLIST)], capture_output=True)
+                try:
+                    LAUNCHAGENT_PLIST.unlink()
+                    _doctor_pass("Removed source LaunchAgent")
+                except OSError as e:
+                    _doctor_fail(f"Could not remove source LaunchAgent: {e}")
+                    core_ok = False
         if brew_plist.exists():
             _doctor_pass("Homebrew service plist installed")
         else:
             _doctor_warn("Homebrew service not installed", "Run: brew services start local-whisper")
-    elif LAUNCHAGENT_PLIST.exists():
+    else:
+        if brew_plist.exists():
+            _doctor_warn(
+                "Homebrew LaunchAgent also exists",
+                "Run ./setup.sh again or remove it so macOS grants permissions to one runtime",
+            )
+            if fix:
+                subprocess.run(["launchctl", "unload", str(brew_plist)], capture_output=True)
+                try:
+                    brew_plist.unlink()
+                    _doctor_pass("Removed Homebrew LaunchAgent")
+                except OSError as e:
+                    _doctor_fail(f"Could not remove Homebrew LaunchAgent: {e}")
+                    core_ok = False
+    if install_method != INSTALL_BREW and LAUNCHAGENT_PLIST.exists():
         result = subprocess.run(
             ["launchctl", "list", "com.local-whisper"],
             capture_output=True,
@@ -427,7 +473,7 @@ def cmd_doctor(args: list):
                         stderr or "Check the plist and permissions manually",
                     )
                     core_ok = False
-    else:
+    elif install_method != INSTALL_BREW:
         _doctor_fail("LaunchAgent not installed", "Run ./setup.sh to install")
         core_ok = False
 
@@ -519,7 +565,13 @@ def cmd_doctor(args: list):
         _doctor_info("Apple Intelligence SDK not installed (optional, macOS 26+)")
 
     # 18. WhisperKit
-    if shutil.which("whisperkit-cli"):
+    try:
+        from whisper_voice.engines.whisperkit_runtime import whisperkit_cli_path
+    except Exception:
+        def whisperkit_cli_path() -> None:
+            return None
+
+    if whisperkit_cli_path():
         _doctor_info("WhisperKit CLI installed")
     else:
         _doctor_info("WhisperKit CLI not installed (optional)")
@@ -716,27 +768,35 @@ def _update_models(required: bool = False) -> bool:
     except Exception:
         active_engine = "parakeet_v3"
 
-    engine_fetch = {
-        "parakeet_v3": (
-            "Parakeet-TDT v3",
-            "from parakeet_mlx import from_pretrained; "
-            "from_pretrained('mlx-community/parakeet-tdt-0.6b-v3'); "
-            "print('Parakeet-TDT v3 up to date.')",
-        ),
-        "qwen3_asr": (
-            "Qwen3-ASR",
-            "from qwen3_asr_mlx import Qwen3ASR; "
-            "Qwen3ASR.from_pretrained('mlx-community/Qwen3-ASR-1.7B-bf16'); "
-            "print('Qwen3-ASR up to date.')",
-        ),
-    }
+    try:
+        from whisper_voice.engines import ENGINE_REGISTRY
+        from whisper_voice.engines.status import engine_model_status
+        from whisper_voice.engines.whisperkit_runtime import ensure_whisperkit_cli_installed
 
-    if active_engine in engine_fetch:
-        label, cmd = engine_fetch[active_engine]
+        status = engine_model_status(active_engine)
+    except Exception:
+        status = {}
+
+    if active_engine == "whisperkit":
+        try:
+            ensure_whisperkit_cli_installed()
+            failed = False
+        except Exception:
+            failed = True
+            print(f"{C_YELLOW}  WhisperKit CLI check failed - skipping{C_RESET}")
+        if failed and required:
+            return False
+    elif status.get("cache_dir"):
+        label = ENGINE_REGISTRY.get(active_engine).name if active_engine in ENGINE_REGISTRY else active_engine
         timed_out = False
         try:
             result = subprocess.run(
-                [python, "-c", cmd],
+                [
+                    python,
+                    "-c",
+                    "from whisper_voice.engines.status import ensure_engine_model_cached; "
+                    f"ensure_engine_model_cached({active_engine!r})",
+                ],
                 env=model_env,
                 timeout=MODEL_PREP_TIMEOUT_SECONDS,
             )

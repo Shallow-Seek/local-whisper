@@ -3,6 +3,7 @@
 """Regression tests for stale macOS audio input recovery."""
 
 import threading
+import time
 from types import SimpleNamespace
 from unittest.mock import Mock
 
@@ -120,6 +121,39 @@ def test_recorder_start_uses_backoff_after_audio_host_reset(monkeypatch):
     assert sleeps == [0.5]
 
 
+def test_wait_for_live_input_keeps_waiting_through_initial_silence(monkeypatch):
+    import whisper_voice.audio as audio_mod
+    from whisper_voice.audio import Recorder
+
+    cfg = SimpleNamespace(audio=SimpleNamespace(sample_rate=16000, pre_buffer=0))
+    monkeypatch.setattr(audio_mod, "get_config", Mock(return_value=cfg))
+
+    recorder = Recorder()
+    recorder._input_warmup_timeout = 0.5
+    recorder._reset_input_health()
+    recorder._recording.set()
+
+    result = {}
+
+    def wait_for_input():
+        result["ok"] = recorder._wait_for_live_input()
+
+    waiter = threading.Thread(target=wait_for_input)
+    waiter.start()
+
+    # First CoreAudio callback after wake can be all zeros. That should make
+    # the stream observable, but not fail the warm-up before the deadline.
+    time_info = SimpleNamespace()
+    recorder._callback(np.zeros((512, 1), dtype=np.float32), 512, time_info, None)
+    time.sleep(0.03)
+    assert waiter.is_alive()
+
+    recorder._callback(np.ones((128, 1), dtype=np.float32) * 0.001, 128, time_info, None)
+    waiter.join(timeout=1.0)
+
+    assert result == {"ok": True}
+
+
 def test_reset_audio_host_refreshes_device_query_and_swallows_query_errors(monkeypatch):
     import whisper_voice.audio as audio_mod
     from whisper_voice.audio import Recorder
@@ -141,6 +175,28 @@ def test_reset_audio_host_refreshes_device_query_and_swallows_query_errors(monke
     recorder.reset_audio_host(close_stream=False)
 
     assert calls == ["terminate", "initialize", "query_devices"]
+
+
+def test_post_wake_resync_resets_audio_host_even_without_prebuffer():
+    from whisper_voice.app_audio_health import AudioHealthMixin
+
+    class DummyApp(AudioHealthMixin):
+        pass
+
+    recorder = SimpleNamespace(
+        recording=False,
+        reset_audio_host=Mock(),
+        stop_monitoring=Mock(),
+        start_monitoring=Mock(),
+    )
+    app = DummyApp()
+    app.recorder = recorder
+
+    app._resync_audio()
+
+    recorder.reset_audio_host.assert_called_once_with(close_stream=False)
+    recorder.stop_monitoring.assert_called_once()
+    recorder.start_monitoring.assert_called_once()
 
 
 def test_start_recording_does_not_duplicate_generic_mic_error_log(monkeypatch):

@@ -23,6 +23,7 @@ from .engines.status import (
     hf_cache_complete,
     remove_engine_cache,
 )
+from .engines.whisperkit_runtime import require_whisperkit_cli
 from .grammar import Grammar
 from .shortcuts import ShortcutProcessor, parse_shortcut
 from .transcriber import Transcriber
@@ -146,7 +147,7 @@ class SwitchingMixin:
             return False, "Download canceled"
         return True, ""
 
-    def _switch_engine(self, engine_name: str):
+    def _switch_engine(self, engine_name: str, rollback_config: tuple[str, str, object] | None = None):
         """Switch transcription engine in-process with rollback on failure.
 
         Two signals run in parallel:
@@ -198,6 +199,10 @@ class SwitchingMixin:
             watcher.start()
 
         try:
+            if engine_name == "whisperkit":
+                _status("Checking WhisperKit CLI...")
+                require_whisperkit_cli()
+
             # Download before unloading the currently working engine. If the
             # network fails or the user cancels, dictation remains on the old
             # model instead of being left with no transcriber.
@@ -278,6 +283,15 @@ class SwitchingMixin:
                     log(f"Rollback failed: {restore_err}", "ERR")
             else:
                 self.transcriber = old_transcriber
+
+            if rollback_config is not None:
+                section, key, old_value = rollback_config
+                try:
+                    update_config_field(section, key, old_value)
+                    self.config = get_config()
+                    self._send_config_snapshot()
+                except Exception as rollback_err:
+                    log(f"Config rollback failed: {rollback_err}", "ERR")
 
             self._send_engines_status()
 

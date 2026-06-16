@@ -53,7 +53,7 @@ flutter build apk --debug --dart-define=LOCAL_WHISPER_QA_SEED=true
 - Qwen3-ASR MLX: `mlx-community/Qwen3-ASR-1.7B-bf16` (~3.8 GB snapshot).
 - Parakeet-TDT v3 MLX: `mlx-community/parakeet-tdt-0.6b-v3` (~2.3 GB snapshot).
 - Kokoro-82M TTS: `mlx-community/Kokoro-82M-bf16` (~371 MB snapshot).
-- WhisperKit Large v3: `argmaxinc/whisperkit-coreml`, wired to `openai_whisper-large-v3-v20240930_547MB`.
+- WhisperKit Large v3: `argmaxinc/whisperkit-coreml`, wired to `openai_whisper-large-v3-v20240930_626MB`.
 - Bundled deterministic cleanup engine.
 
 The setup model step shows the recommended pack inline with install progress: WhisperKit on iOS and Parakeet-TDT v3 INT8 ONNX on Android. The optional model list opens as an in-place sheet, so first-run setup does not detour to the Models tab.

@@ -86,8 +86,9 @@ max_tokens = 0
 url = "http://localhost:50060/v1/audio/transcriptions"
 check_url = "http://localhost:50060/"
 
-# Whisper model to use
-model = "whisper-large-v3-v20240930"
+# WhisperKit model to use. Argmax recommends this variant for maximum
+# multilingual accuracy across iOS and macOS.
+model = "large-v3-v20240930_626MB"
 
 # Language code (en, fa, es, fr, de, etc. or "auto" for detection)
 language = "auto"
@@ -343,7 +344,7 @@ class HotkeyConfig:
 class WhisperConfig:
     url: str = "http://localhost:50060/v1/audio/transcriptions"
     check_url: str = "http://localhost:50060/"
-    model: str = "whisper-large-v3-v20240930"
+    model: str = "large-v3-v20240930_626MB"
     language: str = "auto"
     timeout: int = 0
     prompt: str = DEFAULT_WHISPER_PROMPT

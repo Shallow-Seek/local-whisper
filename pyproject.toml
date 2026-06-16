@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "local-whisper"
-version = "1.6.12"
+version = "1.6.13"
 description = "Local macOS dictation with local transcription and grammar cleanup"
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -29,23 +29,24 @@ dependencies = [
     "numpy>=2.4.4",
     "requests>=2.25.0",
     "pynput>=1.8.1",
-    "pyobjc-framework-AVFoundation>=12.1",
-    "pyobjc-framework-Cocoa>=12.1",
-    "pyobjc-framework-Quartz>=12.1",
-    "parakeet-mlx>=0.5.1",
+    "pyobjc-framework-AVFoundation>=12.2",
+    "pyobjc-framework-ApplicationServices>=12.2",
+    "pyobjc-framework-Cocoa>=12.2",
+    "pyobjc-framework-Quartz>=12.2",
+    "parakeet-mlx>=0.5.2",
     "qwen3-asr-mlx>=0.1.1",
     "kokoro-mlx>=0.1.2",
-    "soundfile>=0.13.1",
+    "soundfile>=0.14.0",
     "misaki[en]>=0.9.4",
     # Kokoro/misaki pull pydantic through spaCy. Keep the core wheel
     # aligned with pydantic's strict import-time ABI check.
-    "pydantic==2.12.5",
-    "pydantic-core==2.41.5",
+    "pydantic==2.13.4",
+    "pydantic-core==2.46.4",
 ]
 
 [project.optional-dependencies]
 apple-intelligence = [
-    "apple-fm-sdk>=0.1.1",
+    "apple-fm-sdk>=0.2.0",
 ]
 
 [project.scripts]

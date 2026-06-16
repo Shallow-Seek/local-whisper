@@ -609,7 +609,7 @@ Future<String> _createInstalledWhisperKitModel(Directory tempDir) async {
       'minimumIosMajor': 14,
       'files': [
         {
-          'sourcePath': 'openai_whisper-large-v3-v20240930_547MB/config.json',
+          'sourcePath': 'openai_whisper-large-v3-v20240930_626MB/config.json',
           'path': 'config.json',
           'size': configSize,
         },

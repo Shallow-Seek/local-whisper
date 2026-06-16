@@ -7,7 +7,6 @@ Handles speech-to-text transcription via local WhisperKit server.
 """
 
 import atexit
-import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -19,6 +18,7 @@ import requests
 from ..config import get_config
 from ..utils import TRANSCRIBE_CHECK_TIMEOUT, log
 from .base import TranscriptionEngine
+from .whisperkit_runtime import require_whisperkit_cli
 
 # Startup timeout for WhisperKit server
 STARTUP_TIMEOUT = 300
@@ -73,15 +73,13 @@ class WhisperKitEngine(TranscriptionEngine):
             log("Whisper server ready", "OK")
             return True
 
-        if shutil.which("whisperkit-cli") is None:
-            log("whisperkit-cli not installed. Run: brew install whisperkit-cli", "ERR")
-            raise RuntimeError("WhisperKit CLI not installed. Run: brew install whisperkit-cli")
+        cli_path = require_whisperkit_cli()
 
         log("Starting WhisperKit server...")
         try:
             self._process = subprocess.Popen(
                 [
-                    'whisperkit-cli', 'serve',
+                    cli_path, 'serve',
                     '--model', config.whisper.model,
                 ],
                 stdout=subprocess.DEVNULL,
@@ -89,8 +87,8 @@ class WhisperKitEngine(TranscriptionEngine):
                 start_new_session=True
             )
         except FileNotFoundError:
-            log("whisperkit-cli not found! Run: brew install whisperkit-cli", "ERR")
-            raise RuntimeError("WhisperKit CLI not installed. Run: brew install whisperkit-cli")
+            log("whisperkit-cli not found after installation", "ERR")
+            raise RuntimeError("WhisperKit CLI not found after installation")
 
         for i in range(STARTUP_TIMEOUT):
             time.sleep(1)

@@ -41,6 +41,7 @@ class AudioHealthMixin:
             return
         log("Audio resync requested (post-wake)", "INFO")
         try:
+            self.recorder.reset_audio_host(close_stream=False)
             self.recorder.stop_monitoring()
             self.recorder.start_monitoring()
         except Exception as e:
