@@ -27,7 +27,7 @@ jobs:
     runs-on: macos-15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -62,7 +62,7 @@ jobs:
     runs-on: macos-15
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Select Xcode 26
         run: |
@@ -91,7 +91,7 @@ jobs:
         working-directory: src/flutter/local_whisper
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Check setup.sh syntax
         run: bash -n setup.sh
@@ -126,7 +126,7 @@ jobs:
         working-directory: doc
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Set up Node
         uses: actions/setup-node@v6
