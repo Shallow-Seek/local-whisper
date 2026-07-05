@@ -328,6 +328,39 @@ class TestUpdateConfigField:
         assert "enabled = true" in cfg_file.read_text(encoding="utf-8")
         assert not (tmp_path / "config.toml.tmp").exists()
 
+    def test_cli_writers_share_locked_atomic_rewrite(self, tmp_path, monkeypatch):
+        # Regression: `wh engine`/`wh backend` used their own flock on
+        # config.toml itself with non-atomic writes — invisible to the
+        # service's sidecar lock, and re-writing an existing value inserted
+        # a duplicate key. Both must go through _locked_config_rewrite.
+        import tomllib
+
+        toml = '[transcription]\nengine = "parakeet_v3"\n[grammar]\nbackend = "none"\nenabled = false\n'
+        cfg_file = tmp_path / "config.toml"
+        cfg_file.write_text(toml, encoding="utf-8")
+
+        for mod in list(sys.modules.keys()):
+            if "whisper_voice" in mod:
+                del sys.modules[mod]
+
+        import whisper_voice.config.schema as schema_mod
+        from whisper_voice.cli import lifecycle
+        schema_mod.CONFIG_DIR = tmp_path
+        schema_mod.CONFIG_FILE = cfg_file
+        monkeypatch.setattr(lifecycle, "_get_config_path", lambda: cfg_file)
+
+        # Writing the same value twice must not duplicate the key.
+        assert lifecycle._write_config_engine("parakeet_v3") is True
+        assert lifecycle._write_config_engine("parakeet_v3") is True
+        assert lifecycle._write_config_backend("ollama") is True
+
+        written = cfg_file.read_text(encoding="utf-8")
+        parsed = tomllib.loads(written)  # raises on duplicate keys
+        assert parsed["transcription"]["engine"] == "parakeet_v3"
+        assert parsed["grammar"]["backend"] == "ollama"
+        assert parsed["grammar"]["enabled"] is True
+        assert not (tmp_path / "config.toml.tmp").exists()
+
 
 # ---------------------------------------------------------------------------
 # Helper function unit tests

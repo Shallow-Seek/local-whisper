@@ -166,22 +166,16 @@ def _interactive_config() -> None:
 
     def _save(item) -> bool:
         try:
-            import fcntl as _fl
-
             from whisper_voice.config import _replace_in_section, _serialize_toml_value
-            fd2 = os.open(str(config_path), os.O_RDWR | os.O_CREAT, 0o644)
-            try:
-                _fl.flock(fd2, _fl.LOCK_EX)
-                content = config_path.read_text()
-                content = _replace_in_section(
+            from whisper_voice.config.mutations import _locked_config_rewrite
+
+            def transform(content: str) -> str:
+                return _replace_in_section(
                     content, item["section"], item["key"],
                     _serialize_toml_value(item["value"])
                 )
-                config_path.write_text(content)
-            finally:
-                _fl.flock(fd2, _fl.LOCK_UN)
-                os.close(fd2)
-            return True
+
+            return _locked_config_rewrite(transform)
         except Exception:
             return False
 
