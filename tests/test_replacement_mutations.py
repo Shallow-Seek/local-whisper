@@ -9,7 +9,6 @@ import tomllib
 
 import pytest
 
-
 BASE_CONFIG = """[hotkey]
 key = "alt_r"
 

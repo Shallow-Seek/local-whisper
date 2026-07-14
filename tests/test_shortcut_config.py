@@ -4,8 +4,6 @@
 
 from types import SimpleNamespace
 
-import pytest
-
 from whisper_voice.shortcuts import (
     build_shortcut_map,
     normalize_shortcut,

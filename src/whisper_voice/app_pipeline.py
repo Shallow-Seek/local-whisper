@@ -10,8 +10,8 @@ import numpy as np
 
 from . import recovery
 from .dictation_commands import apply_dictation_commands
-from .replacements import apply_replacements
 from .long_session import LONG_SESSION_THRESHOLD_SECONDS, SessionChunk, SessionLog
+from .replacements import apply_replacements
 from .utils import (
     CLIPBOARD_TIMEOUT,
     LOG_TRUNCATE,
