@@ -1,0 +1,80 @@
+name: iOS IPA Build (Targeting iOS 26)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/flutter/local_whisper/**"
+      - ".github/workflows/ios-ipa.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/flutter/local_whisper/**"
+      - ".github/workflows/ios-ipa.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build-iphone-ipa:
+    name: Build iPhone IPA
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: src/flutter/local_whisper
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        run: flutter pub get
+
+      - name: Upgrade sherpa_onnx packages
+        run: flutter pub upgrade sherpa_onnx sherpa_onnx_ios
+
+      - name: Update Deployment Target to iOS 26
+        # Injected step: Overrides the repo's default targets before Xcode resolves dependencies
+        run: |
+          sed -i '' 's/platform :ios, .*/platform :ios, "26.0"/' ios/Podfile || true
+          sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = .*/IPHONEOS_DEPLOYMENT_TARGET = 26.0;/g' ios/Runner.xcodeproj/project.pbxproj
+
+      - name: Resolve Swift package dependencies
+        run: |
+          for attempt in 1 2 3; do
+            if xcodebuild -resolvePackageDependencies \
+              -workspace ios/Runner.xcworkspace \
+              -scheme Runner \
+              -clonedSourcePackagesDirPath "$RUNNER_TEMP/swift-packages"; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Failed to resolve Swift packages after ${attempt} attempts."
+              exit 1
+            fi
+
+            echo "::warning::Swift package resolution failed (attempt ${attempt}); retrying..."
+            sleep 15
+          done
+
+      - name: Build unsigned iPhone IPA
+        run: flutter build ipa --release --no-codesign
+
+      - name: Verify IPA output
+        run: |
+          test -d build/ios/ipa
+          find build/ios/ipa -name "*.ipa" -print -quit | grep -q ".ipa"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iphone-ipa-ios26
+          path: src/flutter/local_whisper/build/ios/ipa/*.ipa
+          if-no-files-found: error
