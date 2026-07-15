@@ -1,7 +1,9 @@
 import AVFoundation
 import Foundation
 import Speech
-
+#if os(iOS) && os(macOS)
+import SpeechFramework  // Add this import for newer APIs
+#endif
 public enum AppleSpeechAvailability: String, Codable, Sendable {
     case unavailable
     case supported
