@@ -19,7 +19,7 @@ permissions:
 jobs:
   build-iphone-ipa:
     name: Build iPhone IPA
-    runs-on: macos-15
+    runs-on: macos-26
     defaults:
       run:
         working-directory: src/flutter/local_whisper
@@ -38,6 +38,16 @@ jobs:
 
       - name: Upgrade sherpa_onnx packages
         run: flutter pub upgrade sherpa_onnx sherpa_onnx_ios
+
+      - name: Select Xcode 26
+        run: |
+          XCODE_26=$(ls -d /Applications/Xcode_26* 2>/dev/null | sort -V | tail -1)
+          if [ -n "$XCODE_26" ]; then
+            sudo xcode-select -s "$XCODE_26"
+            echo "Using $XCODE_26"
+          else
+            echo "::warning::Xcode 26 not found in /Applications"
+          fi
 
       - name: Update Deployment Target to iOS 26
         # Injected step: Overrides the repo's default targets before Xcode resolves dependencies
