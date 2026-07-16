@@ -74,8 +74,16 @@ jobs:
             sleep 15
           done
 
-      - name: Build unsigned iPhone IPA
-        run: flutter build ipa --release --no-codesign
+      - name: Build unsigned iPhone Application
+        run: flutter build ios --release --no-codesign
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/ios/ipa/Payload
+          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r -y LocalWhisper.ipa Payload
+          rm -rf Payload
 
       - name: Verify IPA output
         run: |
