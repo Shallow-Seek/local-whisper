@@ -80,7 +80,7 @@ jobs:
       - name: Package unsigned IPA
         run: |
           mkdir -p build/ios/ipa/Payload
-          cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cp -R "build/ios/iphoneos/Local Whisper.app" build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r -y LocalWhisper.ipa Payload
           rm -rf Payload
