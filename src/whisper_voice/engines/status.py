@@ -14,7 +14,29 @@ import shutil
 from pathlib import Path
 from typing import Dict, Iterable, Optional
 
+from .qwen3_models import DEFAULT_QWEN3_ASR_MODEL, qwen3_warm_sentinel_name
+
 MODEL_DIR = Path.home() / ".whisper" / "models"
+
+# WhisperKit is not an HF-cache engine: whisperkit-cli downloads Core ML model
+# packages via its own downloader (ignoring HF_HUB_CACHE) into
+# ``~/Documents/huggingface/models/argmaxinc/whisperkit-coreml/<prefix>_<model>``.
+# We still manage that directory here so its card reports size and gets a
+# Remove button like every other engine — but deliberately WITHOUT an
+# ``hf_repo``, so the switch path never attaches an HF DownloadWatcher or tries
+# to snapshot_download it (the argmaxinc repo hosts many models; whisperkit-cli
+# fetches only the one variant on `serve`).
+WHISPERKIT_MODELS_DIR = (
+    Path.home() / "Documents" / "huggingface" / "models" / "argmaxinc" / "whisperkit-coreml"
+)
+# whisperkit.py launches `serve --model <model>` without --model-prefix, so the
+# default prefix applies. Each model dir holds these Core ML packages.
+WHISPERKIT_MODEL_PREFIX = "openai"
+WHISPERKIT_REQUIRED = (
+    "AudioEncoder.mlmodelc",
+    "TextDecoder.mlmodelc",
+    "MelSpectrogram.mlmodelc",
+)
 
 # Engine id → Hugging Face repo metadata.
 # `hf_repo` is what HuggingFace writes as ``models--<org>--<name>``.
@@ -25,12 +47,86 @@ ENGINE_MODEL_MAP: Dict[str, Dict[str, object]] = {
         "required_files": ("config.json", "model.safetensors"),
     },
     "qwen3_asr": {
-        "hf_repo": "mlx-community/Qwen3-ASR-1.7B-bf16",
-        "warm_sentinel": ".qwen3_warmed",
+        "hf_repo": DEFAULT_QWEN3_ASR_MODEL,
+        "warm_sentinel": qwen3_warm_sentinel_name(DEFAULT_QWEN3_ASR_MODEL),
         "required_files": ("config.json", "model.safetensors"),
     },
-    # whisperkit: models live under WhisperKit's own cache; not managed here.
+    # whisperkit is handled separately (see WHISPERKIT_* above): its weights are
+    # Core ML packages outside the HF cache, so it stays out of this HF map.
 }
+
+
+def _whisperkit_model_dir() -> Optional[Path]:
+    """Directory where whisperkit-cli stores the currently configured model.
+
+    Returns None when the config can't be read. The path is deterministic from
+    ``config.whisper.model`` and the default ``openai`` prefix — it may not
+    exist yet if the model was never downloaded.
+    """
+    try:
+        from ..config import get_config
+
+        model = str(get_config().whisper.model).strip()
+    except Exception:
+        return None
+    if not model:
+        return None
+    return WHISPERKIT_MODELS_DIR / f"{WHISPERKIT_MODEL_PREFIX}_{model}"
+
+
+def _whisperkit_complete(model_dir: Path) -> bool:
+    """A WhisperKit model is usable once all three Core ML packages are present.
+
+    Each ``.mlmodelc`` is a directory; a half-pulled model can leave an empty
+    or missing package, so require every one to exist and be non-empty.
+    """
+    for rel in WHISPERKIT_REQUIRED:
+        pkg = model_dir / rel
+        if not pkg.is_dir():
+            return False
+        try:
+            if not any(pkg.iterdir()):
+                return False
+        except OSError:
+            return False
+    return True
+
+
+def _whisperkit_status() -> Dict:
+    model_dir = _whisperkit_model_dir()
+    if model_dir is None:
+        return {
+            "downloaded": False,
+            "download_status": "missing",
+            "size_mb": None,
+            "warmed": False,
+            "cache_dir": None,
+            "hf_repo": None,
+            "managed_by": "whisperkit",
+            "removable": False,
+        }
+    exists = model_dir.is_dir()
+    downloaded = bool(exists and _whisperkit_complete(model_dir))
+    size_bytes = _dir_size_bytes(model_dir) if exists else 0
+    if downloaded:
+        download_status = "downloaded"
+    elif size_bytes > 0:
+        download_status = "partial"
+    else:
+        download_status = "missing"
+    return {
+        "downloaded": downloaded,
+        "download_status": download_status,
+        "size_mb": _bytes_to_mb(size_bytes) if size_bytes > 0 else None,
+        # "warmed" is the MLX graph-cache signal; WhisperKit has no equivalent,
+        # so leave it off rather than tag the card with a misleading "warmed".
+        "warmed": False,
+        "cache_dir": str(model_dir),
+        # No hf_repo on purpose — keeps whisperkit out of the HF download path.
+        "hf_repo": None,
+        "managed_by": "whisperkit",
+        "removable": downloaded,
+    }
 
 
 def _dir_size_bytes(path: Path) -> int:
@@ -104,21 +200,30 @@ def _configured_hf_repo(engine_id: str) -> Optional[str]:
     return str(info["hf_repo"]) if info and info.get("hf_repo") else None
 
 
-def engine_model_metadata(engine_id: str) -> Optional[Dict[str, object]]:
+def engine_model_metadata(
+    engine_id: str, hf_repo: Optional[str] = None
+) -> Optional[Dict[str, object]]:
     """Return managed HF model metadata for an engine using current config."""
     info = ENGINE_MODEL_MAP.get(engine_id)
     if info is None:
         return None
-    hf_repo = _configured_hf_repo(engine_id) or str(info["hf_repo"])
+    hf_repo = hf_repo or _configured_hf_repo(engine_id) or str(info["hf_repo"])
+    warm_sentinel = info["warm_sentinel"]
+    legacy_warm_sentinels: tuple[str, ...] = ()
+    if engine_id == "qwen3_asr":
+        warm_sentinel = qwen3_warm_sentinel_name(hf_repo)
+        if hf_repo == DEFAULT_QWEN3_ASR_MODEL:
+            legacy_warm_sentinels = (".qwen3_warmed",)
     return {
         "hf_repo": hf_repo,
         "cache_dir": hf_cache_dir_name(hf_repo),
-        "warm_sentinel": info["warm_sentinel"],
+        "warm_sentinel": warm_sentinel,
+        "legacy_warm_sentinels": legacy_warm_sentinels,
         "required_files": tuple(info.get("required_files", ())),
     }
 
 
-def engine_model_status(engine_id: str) -> Dict:
+def engine_model_status(engine_id: str, hf_repo: Optional[str] = None) -> Dict:
     """Return cache status for a single engine.
 
     Keys:
@@ -128,6 +233,9 @@ def engine_model_status(engine_id: str) -> Dict:
       cache_dir:  str|None -- absolute path to the HF cache folder
       hf_repo:    str|None -- which HF repo the engine uses
     """
+    if engine_id == "whisperkit":
+        return _whisperkit_status()
+
     if engine_id == "apple_speech":
         from .apple_speech import apple_speech_model_status
 
@@ -148,7 +256,7 @@ def engine_model_status(engine_id: str) -> Dict:
             "message": native.get("message"),
         }
 
-    info = engine_model_metadata(engine_id)
+    info = engine_model_metadata(engine_id, hf_repo=hf_repo)
     if info is None:
         return {
             "downloaded": False,
@@ -159,7 +267,10 @@ def engine_model_status(engine_id: str) -> Dict:
         }
 
     cache_path = MODEL_DIR / str(info["cache_dir"])
-    warmed_path = MODEL_DIR / str(info["warm_sentinel"])
+    warmed_paths = [MODEL_DIR / str(info["warm_sentinel"])]
+    warmed_paths.extend(
+        MODEL_DIR / str(name) for name in info.get("legacy_warm_sentinels", ())
+    )
     size_bytes = _dir_size_bytes(cache_path) if cache_path.exists() else 0
     required_files = tuple(info.get("required_files", ()))
     downloaded = hf_cache_complete(cache_path, required_files)
@@ -169,18 +280,18 @@ def engine_model_status(engine_id: str) -> Dict:
         "downloaded": downloaded,
         "download_status": download_status,
         "size_mb": size_mb,
-        "warmed": warmed_path.exists(),
+        "warmed": any(path.exists() for path in warmed_paths),
         "cache_dir": str(cache_path),
         "hf_repo": info["hf_repo"],
     }
 
 
-def ensure_engine_model_cached(engine_id: str) -> None:
+def ensure_engine_model_cached(engine_id: str, hf_repo: Optional[str] = None) -> None:
     """Download a managed engine's HF snapshot if it is missing or partial."""
-    info = engine_model_metadata(engine_id)
+    info = engine_model_metadata(engine_id, hf_repo=hf_repo)
     if info is None:
         return
-    status = engine_model_status(engine_id)
+    status = engine_model_status(engine_id, hf_repo=hf_repo)
     if status.get("downloaded", False):
         return
 
@@ -206,9 +317,22 @@ def ensure_engine_model_cached(engine_id: str) -> None:
         if old_offline is not None:
             os.environ["HF_HUB_OFFLINE"] = old_offline
 
-    refreshed = engine_model_status(engine_id)
+    refreshed = engine_model_status(engine_id, hf_repo=hf_repo)
     if not refreshed.get("downloaded", False):
         raise RuntimeError(f"{engine_id} model download did not finish cleanly")
+
+
+def mark_engine_model_warmed(engine_id: str, hf_repo: Optional[str] = None) -> bool:
+    """Persist that the selected managed model completed runtime warm-up."""
+    info = engine_model_metadata(engine_id, hf_repo=hf_repo)
+    if info is None:
+        return False
+    try:
+        MODEL_DIR.mkdir(parents=True, exist_ok=True)
+        (MODEL_DIR / str(info["warm_sentinel"])).touch()
+        return True
+    except OSError:
+        return False
 
 
 def all_engine_statuses(active_id: Optional[str]) -> Dict[str, Dict]:
@@ -227,6 +351,13 @@ def all_engine_statuses(active_id: Optional[str]) -> Dict[str, Dict]:
 
 def remove_engine_cache(engine_id: str) -> bool:
     """Delete the on-disk weights + warm sentinel for an engine. Returns True if anything removed."""
+    if engine_id == "whisperkit":
+        model_dir = _whisperkit_model_dir()
+        if model_dir is not None and model_dir.is_dir():
+            shutil.rmtree(model_dir, ignore_errors=True)
+            return True
+        return False
+
     if engine_id == "apple_speech":
         from .apple_speech import AppleSpeechEngine
 
@@ -246,11 +377,15 @@ def remove_engine_cache(engine_id: str) -> bool:
     if cache_path.is_dir():
         shutil.rmtree(cache_path, ignore_errors=True)
         removed = True
-    warmed_path = MODEL_DIR / str(info["warm_sentinel"])
-    if warmed_path.exists():
-        try:
-            warmed_path.unlink()
-            removed = True
-        except OSError:
-            pass
+    warmed_paths = [MODEL_DIR / str(info["warm_sentinel"])]
+    warmed_paths.extend(
+        MODEL_DIR / str(name) for name in info.get("legacy_warm_sentinels", ())
+    )
+    for warmed_path in warmed_paths:
+        if warmed_path.exists():
+            try:
+                warmed_path.unlink()
+                removed = True
+            except OSError:
+                pass
     return removed

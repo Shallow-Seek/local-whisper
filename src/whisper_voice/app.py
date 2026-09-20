@@ -42,6 +42,7 @@ from .shortcuts import (
 )
 from .transcriber import Transcriber
 from .tts_processor import TTSProcessor
+from .ui_bundle import preferred_ui_binary
 from .utils import (
     C_BOLD,
     C_CYAN,
@@ -335,11 +336,17 @@ class App(IPCMixin, RecordingMixin, PipelineMixin, CommandsMixin, SwitchingMixin
             # triggers map to None here and are unaffected.
             interceptor.set_record_keycode(KEYCODE_FOR_KEY_NAME.get(config.hotkey.key))
 
-            # Interception pauses while recording/processing.
+            # Interception pauses while recording/processing. Capture mode is
+            # separate: while the Settings shortcut recorder is armed, bound
+            # combos must PASS THROUGH (not be swallowed) so they reach the
+            # recorder and it can show its conflict notice.
             interceptor.set_enabled_guard(
                 lambda: (not self.recorder.recording
                          and not self._busy
                          and not (self._shortcut_processor and self._shortcut_processor.is_busy()))
+            )
+            interceptor.set_capture_guard(
+                lambda: getattr(self, "_shortcut_capture_paused", False)
             )
 
     def _set_record_key(self, key_name: str) -> bool:
@@ -416,9 +423,7 @@ class App(IPCMixin, RecordingMixin, PipelineMixin, CommandsMixin, SwitchingMixin
 
     def _spawn_swift_ui(self):
         """Launch the Swift UI binary as a subprocess."""
-        swift_binary = (
-            Path.home() / ".whisper" / "LocalWhisperUI.app" / "Contents" / "MacOS" / "LocalWhisperUI"
-        )
+        swift_binary = preferred_ui_binary()
         if not swift_binary.exists():
             log("Swift UI binary not found. Running headless.")
             return

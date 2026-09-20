@@ -4,6 +4,48 @@ This changelog tracks notable Local Whisper changes.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+## [1.10.1] - 2026-07-24
+
+### Fixed
+
+- Fixed Homebrew upgrades continuing to launch an older per-user menu app. The service now prefers the UI bundle installed with its current Homebrew version, and the formula packages both the menu app and native Apple Speech helper.
+
+## [1.10.0] - 2026-07-24
+
+### Added
+
+- Added first-class Qwen3-ASR 1.7B and 0.6B MLX model choices across configuration, macOS Settings, CLI configuration, setup, model download/status handling, and documentation. The higher-quality 1.7B variant remains the default; 0.6B offers lower memory use and latency.
+- Added Qwen3-ASR context and hotwords through the owned `qwen3-asr-mlx` 0.2.0 runtime. When Vocabulary is enabled, Local Whisper passes its spoken-to-preferred word list to both supported Qwen variants through an explicit engine and model capability, capped at 4,096 characters per request.
+- Added capability-matrix coverage proving that Parakeet-TDT, WhisperKit, and Apple SpeechTranscriber never receive Qwen vocabulary context.
+
+### Fixed
+
+- Fixed the WhisperKit engine card missing the size readout and Remove button that every other engine has: WhisperKit's on-disk Core ML model is now managed like the rest, so its card shows how much disk it uses and can free it, instead of being treated as an unmanaged external model.
+- Fixed active transcription model changes made through `wh config` being reported as applied live without actually reloading the engine.
+- Fixed source distributions accidentally including local Flutter build and tool caches.
+
+## [1.9.0] - 2026-07-16
+
+### Added
+
+- Added a rich menu bar panel replacing the plain dropdown: live status with waveform and timer while recording, quick toggles for paste-at-cursor, replacements, read-aloud, and sounds, engine and grammar pickers fed by the live engine registry, recent transcriptions with click-to-copy and audio reveal, and a Start button when the background service is down.
+- Added inline switch feedback on engine cards, determinate download bars with a real total from a repo-size preflight, and busy-gating so actions the service would reject are disabled instead of failing silently.
+- Added a capture mode that pauses shortcut interception while a keybinding recorder is armed, so currently-bound combos reach the recorder and show their conflict instead of firing the action.
+
+### Changed
+
+- Redesigned the entire macOS settings window on a new design system: a graphite brand sidebar with grouped navigation and a live service pill, card-based panels with inline descriptions instead of hover tooltips, and consistent light and dark appearances.
+- Rebuilt onboarding and the settings window as proper window scenes with reliable activation, ordering, and close behavior, replacing the old Settings scene and hand-made window hacks.
+- The Activity panel, folder shortcuts, and history captions now follow the configured backup directory instead of assuming `~/.whisper`.
+
+### Fixed
+
+- Fixed the onboarding "Get started" button doing nothing, engine and grammar switches silently reverting while the service restarts, stale error text resurfacing after successful work, frozen download bars after a service crash, and the overlay freezing on screen when the service dies mid-recording or a display disconnects.
+- Fixed config edits applying out of order: service-side message handling is now strictly serial, queued edits replay only after the reconnect snapshot, and no-op writes no longer reload the active engine.
+- Fixed replacement-rule editing creating case-duplicate or orphaned rules, and made vocabulary import tolerant of header rows, arrow files with commas in values, and TOML-escaped lines pasted from config.toml.
+
 ## [1.8.0] - 2026-07-14
 
 ### Added
