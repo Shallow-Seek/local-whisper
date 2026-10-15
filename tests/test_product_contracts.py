@@ -254,8 +254,8 @@ def test_github_actions_use_current_node24_ready_actions():
     assert "uses: actions/checkout@v7" in pages_workflow
     assert "uses: actions/checkout@v6" not in combined_workflows
     assert "uses: actions/setup-python@v7" in workflow
-    assert "uses: actions/setup-node@v7" in workflow
     assert "uses: actions/setup-node@v7" in pages_workflow
+    assert "uses: dorny/paths-filter@v4" in workflow
     assert 'package-ecosystem: "github-actions"' in dependabot
     assert dependabot.count('interval: "monthly"') == dependabot.count("package-ecosystem:")
     assert dependabot.count("groups:") == dependabot.count("package-ecosystem:")
