@@ -13,6 +13,7 @@ on:
       - "doc/**"
       - "README.md"
       - ".github/workflows/docs-pages.yml"
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -22,6 +23,34 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Changes and setup.sh syntax check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      swift: ${{ steps.filter.outputs.swift }}
+      flutter: ${{ steps.filter.outputs.flutter }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Detect changed surfaces
+        id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            swift:
+              - "LocalWhisperUI/**"
+              - ".github/workflows/ci.yml"
+            flutter:
+              - "src/flutter/**"
+              - ".github/workflows/ci.yml"
+
+      - name: Check setup.sh and install.sh syntax
+        run: bash -n setup.sh && bash -n install.sh
+
   python-checks:
     name: Python checks
     runs-on: macos-15
@@ -33,9 +62,19 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.lock
+            pyproject.toml
 
-      - name: Install dependencies
-        run: pip install -e . ruff pytest
+      - name: Install locked dependencies
+        run: |
+          pip install -r requirements.lock
+          pip install --no-deps -e .
+          pip install ruff pytest
+
+      - name: Lint with ruff
+        run: ruff check src/ tests/
 
       - name: Import smoke test
         run: |
@@ -54,11 +93,10 @@ jobs:
       - name: Unit tests
         run: python -m pytest tests/ -v --ignore=tests/test_flow.py
 
-      - name: Lint with ruff
-        run: ruff check src/
-
   swift-build:
     name: Swift build
+    needs: changes
+    if: needs.changes.outputs.swift == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: macos-26
 
     steps:
@@ -83,6 +121,8 @@ jobs:
 
   flutter-checks:
     name: Flutter mobile checks
+    needs: changes
+    if: needs.changes.outputs.flutter == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -98,55 +138,10 @@ jobs:
           cache: true
 
       - name: Install Flutter dependencies
-        run: flutter pub get
+        run: flutter pub get --enforce-lockfile
 
       - name: Analyze Flutter app
         run: flutter analyze
 
       - name: Flutter widget tests
         run: flutter test
-
-  setup-check:
-    name: setup.sh syntax check
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Check setup.sh syntax
-        run: bash -n setup.sh
-
-  docs-checks:
-    name: Mintlify docs checks
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: doc
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Set up Node
-        uses: actions/setup-node@v7
-        with:
-          node-version: "24"
-
-      - name: Install Mintlify CLI
-        run: npm install -g mint
-
-      - name: Validate docs
-        run: mint validate
-
-      - name: Check docs links
-        run: mint broken-links
-
-      - name: Export docs
-        run: mint export --output export.zip
-
-      - name: Check GitHub Pages export preparation
-        run: |
-          rm -rf ../_site
-          mkdir -p ../_site
-          unzip -q export.zip -d ../_site
-          cp ../install.sh ../_site/install.sh
-          node scripts/prepare-github-pages.mjs ../_site "/local-whisper"

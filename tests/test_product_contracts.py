@@ -201,7 +201,9 @@ def test_github_pages_auto_deploys_mintlify_doc_updates():
     assert "runs-on: ubuntu-latest" in workflow
     assert "pages: write" in workflow
     assert "id-token: write" in workflow
-    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow
+    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24" not in workflow
+    assert "pull_request:" in workflow
+    assert "if: github.event_name != 'pull_request'" in workflow
     assert "cancel-in-progress: true" in workflow
     assert "cp ../install.sh ../_site/install.sh" in workflow
     assert "Deploy GitHub Pages" in workflow
@@ -219,6 +221,9 @@ def test_general_ci_does_not_run_expensive_jobs_for_docs_only_changes():
     assert "cancel-in-progress: true" in workflow
     assert "setup.sh syntax check" in workflow
     assert "runs-on: ubuntu-latest" in workflow
+    assert "mint " not in workflow
+    assert "needs.changes.outputs.swift == 'true'" in workflow
+    assert "needs.changes.outputs.flutter == 'true'" in workflow
 
 
 def test_configuration_reference_matches_generated_default_config():
@@ -252,6 +257,8 @@ def test_github_actions_use_current_node24_ready_actions():
     assert "uses: actions/setup-node@v7" in workflow
     assert "uses: actions/setup-node@v7" in pages_workflow
     assert 'package-ecosystem: "github-actions"' in dependabot
+    assert dependabot.count('interval: "monthly"') == dependabot.count("package-ecosystem:")
+    assert dependabot.count("groups:") == dependabot.count("package-ecosystem:")
 
 
 def test_ci_runs_flutter_static_and_widget_gates():
