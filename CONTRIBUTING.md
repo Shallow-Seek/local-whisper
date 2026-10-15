@@ -75,7 +75,7 @@ src/whisper_voice/
 ├── engines/
 │   ├── base.py            # TranscriptionEngine base
 │   ├── parakeet.py        # Parakeet-TDT v3 (default, MLX)
-│   ├── qwen3_asr.py       # Qwen3-ASR (MLX, English only)
+│   ├── qwen3_asr.py       # Qwen3-ASR (MLX, multilingual)
 │   └── whisperkit.py      # WhisperKit (local server alternative)
 └── backends/
     ├── base.py            # Backend base
