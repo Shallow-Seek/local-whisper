@@ -113,7 +113,7 @@ for path in [pathlib.Path("setup.sh"), pathlib.Path("src/whisper_voice/cli/build
 mobile = pathlib.Path("src/flutter/local_whisper")
 pubspec = mobile / "pubspec.yaml"
 text = pubspec.read_text()
-match = re.search(r'^version:\s*\d+\.\d+\.\d+\+(\d+)\s*$', text, re.M)
+match = re.search(r'^version:[ \t]*\d+\.\d+\.\d+\+(\d+)[ \t]*$', text, re.M)
 if not match:
     raise SystemExit("failed to find mobile version and build number")
 build_number = int(match.group(1)) + 1
