@@ -690,7 +690,7 @@ local-whisper/
 │   │   └── SceneDelegate.swift
 │   ├── ios/LocalWhisperKeyboard/     # Native keyboard extension
 │   ├── android/app/src/main/
-│   │   ├── AndroidManifest.xml       # App identity, microphone, haptics, input method
+│   │   ├── AndroidManifest.xml       # App identity, microphone, network, haptics, input method
 │   │   ├── kotlin/info/gabrimatic/localwhisper/
 │   │   │   ├── MainActivity.kt       # Method/event channels for recording and setup
 │   │   │   └── LocalWhisperInputMethodService.kt

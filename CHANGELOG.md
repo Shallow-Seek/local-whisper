@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Updated Python dependencies, including Pydantic 2.14.1, huggingface-hub 2.2.0, MLX 0.32.4, and kokoro-mlx 0.1.3, and refreshed the Python 3.11 dependency lock.
 - Updated mobile build tooling and packages: Gradle 9.8.1, Kotlin 2.4.21, argmax-oss-swift (WhisperKit) 1.1.1, and the latest compatible Flutter packages. The Android app compiles Kotlin through the Android Gradle Plugin's built-in Kotlin support.
-- The iOS deployment target is iOS 16, the minimum WhisperKit supports. The previous iOS 15 requirement was not buildable.
+- The iOS app requires iOS 16 or later, the minimum argmax-oss-swift (WhisperKit) declares.
 - The mobile Qwen3-ASR catalog entry describes the model family as multilingual with model-side language detection.
 - Python sources use current Python 3.11 typing idioms, and lint covers tests.
 - CI runs the Swift and Flutter jobs only when their sources change, validates documentation pull requests without deploying them, and Dependabot groups updates into one monthly pull request per ecosystem.
@@ -25,7 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Builds
 
 - The macOS bundle includes the menu app and native speech helper for Apple Silicon.
-- The Android arm64 APK is a preview build signed with the project's development key.
+- The Android arm64 APK is a preview build signed with a development key. Its signing key differs from the 1.11.0 preview, so uninstall 1.11.0 before installing it. Uninstalling clears local history and settings; 1.11.0 could not download model packs, so there are no models to lose.
 - App Store and Play Store publishing are not configured.
 
 ## [1.11.0] - 2026-10-02
