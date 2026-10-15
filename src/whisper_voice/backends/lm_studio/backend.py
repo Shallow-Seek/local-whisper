@@ -7,7 +7,6 @@ Handles grammar correction via LM Studio's OpenAI-compatible API.
 """
 
 import time
-from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -67,11 +66,11 @@ class LMStudioBackend(GrammarBackend):
             log(f"LM Studio: {model_info}", "WARN")
             return False
 
-    def fix(self, text: str) -> Tuple[str, Optional[str]]:
+    def fix(self, text: str) -> tuple[str, str | None]:
         """Fix grammar using LM Studio. Delegates to transcription mode."""
         return self.fix_with_mode(text, "transcription")
 
-    def fix_with_mode(self, text: str, mode_id: str) -> Tuple[str, Optional[str]]:
+    def fix_with_mode(self, text: str, mode_id: str) -> tuple[str, str | None]:
         """Fix text using a specific transformation mode."""
         # Validate mode exists before processing
         mode = get_mode(mode_id)
@@ -209,7 +208,7 @@ class LMStudioBackend(GrammarBackend):
 
         return False
 
-    def _check_model(self) -> Tuple[bool, str]:
+    def _check_model(self) -> tuple[bool, str]:
         """Check if the configured model is available."""
         config = get_config()
 

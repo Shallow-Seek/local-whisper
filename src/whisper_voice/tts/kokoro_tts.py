@@ -5,7 +5,7 @@
 import gc
 import queue
 import threading
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import numpy as np
 import sounddevice as sd
@@ -95,7 +95,7 @@ class KokoroTTSProvider(TTSProvider):
         text: str,
         stop_event: threading.Event,
         speaker: str = "af_sky",
-        on_playback_start: Optional[Callable] = None,
+        on_playback_start: Callable | None = None,
     ) -> None:
         if not text.strip():
             return
@@ -169,7 +169,7 @@ def _synthesize_and_play(
     text: str,
     voice: str,
     stop_event: threading.Event,
-    on_playback_start: Optional[Callable] = None,
+    on_playback_start: Callable | None = None,
 ) -> None:
     audio_q: queue.Queue[np.ndarray | None] = queue.Queue()
     first_chunk_ready = threading.Event()

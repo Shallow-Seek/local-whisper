@@ -13,7 +13,6 @@ import concurrent.futures
 import gc
 import time
 from pathlib import Path
-from typing import Optional, Tuple
 
 import numpy as np
 
@@ -24,7 +23,7 @@ from .base import TranscriptionEngine
 _DEFAULT_MODEL = "mlx-community/parakeet-tdt-0.6b-v3"
 
 
-def _quick_duration(path: str) -> Optional[float]:
+def _quick_duration(path: str) -> float | None:
     """Return wav duration in seconds using the stdlib ``wave`` module.
     ``None`` if the file isn't a readable PCM wav."""
     try:
@@ -127,12 +126,12 @@ class ParakeetEngine(TranscriptionEngine):
     def running(self) -> bool:
         return self._model is not None
 
-    def transcribe(self, path: Path) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path) -> tuple[str | None, str | None]:
         if self._model is None:
             return None, "Model not loaded"
 
         start = time.monotonic()
-        duration_seconds: Optional[float] = None
+        duration_seconds: float | None = None
         try:
             config = get_config()
             cfg = getattr(config, "parakeet", None)
@@ -190,7 +189,7 @@ class ParakeetEngine(TranscriptionEngine):
                 return None
 
     @staticmethod
-    def _log_timing(start: float, duration: Optional[float]) -> None:
+    def _log_timing(start: float, duration: float | None) -> None:
         elapsed = time.monotonic() - start
         if duration and duration > 0:
             rtf = elapsed / duration

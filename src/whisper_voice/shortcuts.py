@@ -10,7 +10,7 @@ The actual key detection is handled by the main keyboard listener in app.py.
 import subprocess
 import threading
 import time
-from typing import TYPE_CHECKING, Optional, Set
+from typing import TYPE_CHECKING
 
 from .backends.modes import get_mode
 from .config import get_config
@@ -280,7 +280,7 @@ class ShortcutProcessor:
             log(f"Unexpected error pasting result: {type(e).__name__}: {e}", "WARN")
             return False
 
-    def _restore_clipboard(self, snapshot: Optional[ClipboardSnapshot]):
+    def _restore_clipboard(self, snapshot: ClipboardSnapshot | None):
         """Restore the pasteboard to its captured state."""
         if snapshot is not None and not snapshot.restore():
             log("Original clipboard content could not be restored", "WARN")
@@ -324,7 +324,7 @@ SUPPORTED_KEYS = _LETTERS | _DIGITS | _FUNCTION_KEYS | _PUNCTUATION
 _BARE_ALLOWED_KEYS = _FUNCTION_KEYS
 
 
-def parse_shortcut(shortcut: str) -> tuple[Set[str], str]:
+def parse_shortcut(shortcut: str) -> tuple[set[str], str]:
     """
     Parse a shortcut string into normalized modifiers and key.
 
@@ -353,7 +353,7 @@ def normalize_shortcut(shortcut: str) -> str:
     return "+".join(ordered + [key]) if key else ""
 
 
-def validate_shortcut(shortcut: str) -> Optional[str]:
+def validate_shortcut(shortcut: str) -> str | None:
     """
     Check whether a shortcut string can actually be intercepted.
 

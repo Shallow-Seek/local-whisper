@@ -6,8 +6,9 @@ from __future__ import annotations
 
 import queue
 import threading
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable, Optional
+from typing import Any
 
 from .utils import log
 
@@ -21,7 +22,7 @@ class TimedOut:
 def run_with_timeout(
     fn: Callable[..., Any],
     *args: Any,
-    timeout_seconds: Optional[float],
+    timeout_seconds: float | None,
     stage: str,
     **kwargs: Any,
 ) -> Any:

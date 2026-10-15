@@ -10,7 +10,7 @@ and implement the required methods.
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Protocol, Tuple, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 class EngineCapability(str, Enum):
@@ -47,7 +47,7 @@ class TranscriptionEngine(ABC):
         pass
 
     @abstractmethod
-    def transcribe(self, path: Path) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path) -> tuple[str | None, str | None]:
         """
         Transcribe an audio file.
 
@@ -79,7 +79,7 @@ class ContextualPromptingEngine(Protocol):
     def transcribe_with_context(
         self,
         path: Path,
-        context: Optional[str],
-    ) -> Tuple[Optional[str], Optional[str]]:
+        context: str | None,
+    ) -> tuple[str | None, str | None]:
         """Transcribe with a locally constructed contextual prompt."""
         ...

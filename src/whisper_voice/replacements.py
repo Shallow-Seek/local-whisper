@@ -27,7 +27,6 @@ Semantics:
 from __future__ import annotations
 
 import re
-from typing import Dict
 
 __all__ = ["apply_replacements", "compile_rule_pattern"]
 
@@ -70,7 +69,7 @@ def _cleanup_after_removal(text: str) -> str:
     return text.strip()
 
 
-def apply_replacements(text: str, rules: Dict[str, str]) -> str:
+def apply_replacements(text: str, rules: dict[str, str]) -> str:
     """Apply vocabulary replacement rules to ``text``.
 
     ``rules`` maps spoken forms to replacements. Rules apply longest spoken

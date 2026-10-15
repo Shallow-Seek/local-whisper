@@ -15,8 +15,8 @@ Usage:
         corrected, error = backend.fix("some text")
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional
 
 from .base import GrammarBackend
 
@@ -48,7 +48,7 @@ def _create_lm_studio() -> GrammarBackend:
 # ============================================================================
 # BACKEND REGISTRY - Add new backends here
 # ============================================================================
-BACKEND_REGISTRY: Dict[str, BackendInfo] = {
+BACKEND_REGISTRY: dict[str, BackendInfo] = {
     "apple_intelligence": BackendInfo(
         id="apple_intelligence",
         name="Apple Intelligence",
@@ -90,7 +90,7 @@ def create_backend(backend_type: str) -> GrammarBackend:
     return BACKEND_REGISTRY[backend_type].factory()
 
 
-def get_backend_info(backend_type: str) -> Optional[BackendInfo]:
+def get_backend_info(backend_type: str) -> BackendInfo | None:
     """Get metadata for a backend type."""
     return BACKEND_REGISTRY.get(backend_type)
 

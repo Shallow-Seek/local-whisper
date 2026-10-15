@@ -20,7 +20,6 @@ Usage:
     grammar.close()
 """
 
-from typing import Optional, Tuple
 
 from .backends import GrammarBackend, create_backend
 from .config import get_config
@@ -55,7 +54,7 @@ class Grammar:
         """Initialize and verify backend availability."""
         return self._backend.start()
 
-    def fix(self, text: str) -> Tuple[str, Optional[str]]:
+    def fix(self, text: str) -> tuple[str, str | None]:
         """
         Fix grammar in the given text.
 
@@ -69,7 +68,7 @@ class Grammar:
         """
         return self._backend.fix(text)
 
-    def fix_with_mode(self, text: str, mode_id: str) -> Tuple[str, Optional[str]]:
+    def fix_with_mode(self, text: str, mode_id: str) -> tuple[str, str | None]:
         """
         Fix text using a specific transformation mode.
 

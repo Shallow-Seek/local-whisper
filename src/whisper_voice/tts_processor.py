@@ -7,7 +7,7 @@ Triggered by the speak shortcut (default Option+T). Pressing again stops playbac
 """
 
 import threading
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from .selection import ClipboardSnapshot, get_selected_text
 from .utils import log, play_sound
@@ -31,7 +31,7 @@ class TTSProcessor:
     stale clipboard content is never spoken when nothing is selected.
     """
 
-    def __init__(self, status_callback: Optional[Callable] = None):
+    def __init__(self, status_callback: Callable | None = None):
         self._status_callback = status_callback
         self._provider = None
         self._provider_id: str = ""

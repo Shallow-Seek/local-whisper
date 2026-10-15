@@ -2,8 +2,8 @@
 # Copyright (c) 2025-2026 Soroush Yousefpour
 """TTS provider registry and factory."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict
 
 from .base import TTSProvider
 
@@ -21,7 +21,7 @@ def _kokoro_factory() -> TTSProvider:
     return KokoroTTSProvider()
 
 
-TTS_REGISTRY: Dict[str, TTSProviderInfo] = {
+TTS_REGISTRY: dict[str, TTSProviderInfo] = {
     "kokoro": TTSProviderInfo(
         id="kokoro",
         name="Kokoro",

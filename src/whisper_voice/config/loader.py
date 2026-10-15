@@ -7,7 +7,6 @@ Configuration loader: reads config.toml and returns a Config instance.
 import sys
 import threading
 import tomllib
-from typing import Optional
 from urllib.parse import urlparse
 
 from . import schema as _schema
@@ -545,7 +544,7 @@ def _migrate_legacy_default_engine(content: str) -> str:
 
 
 # Global config instance with thread-safe initialization
-_config: Optional[Config] = None
+_config: Config | None = None
 _config_lock = threading.Lock()
 
 

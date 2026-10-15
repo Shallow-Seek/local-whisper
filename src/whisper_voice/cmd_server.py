@@ -14,8 +14,8 @@ import json
 import os
 import socket
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from .utils import log
 
@@ -32,16 +32,16 @@ class CommandServer:
         The handler may call send_fn multiple times (e.g. started + done).
         """
         self._handler = handler
-        self._server: Optional[socket.socket] = None
+        self._server: socket.socket | None = None
         self._running = False
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         # Active operation cancellation: set by client disconnect or stop command
-        self._active_stop_event: Optional[threading.Event] = None
+        self._active_stop_event: threading.Event | None = None
         self._active_lock = threading.Lock()
         self._handling = False
 
     @property
-    def stop_event(self) -> Optional[threading.Event]:
+    def stop_event(self) -> threading.Event | None:
         """The stop event for the currently active CLI operation, if any."""
         with self._active_lock:
             return self._active_stop_event
@@ -92,7 +92,7 @@ class CommandServer:
         while self._running:
             try:
                 client, _ = server.accept()
-            except socket.timeout:
+            except TimeoutError:
                 continue
             except Exception:
                 if self._running:
@@ -155,7 +155,7 @@ class CommandServer:
             while b"\n" not in buf:
                 try:
                     chunk = client.recv(4096)
-                except socket.timeout:
+                except TimeoutError:
                     return
                 if not chunk:
                     return

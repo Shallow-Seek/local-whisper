@@ -22,7 +22,6 @@ Usage:
 """
 
 from pathlib import Path
-from typing import Optional, Tuple
 
 from .config import get_config
 from .engines import (
@@ -69,7 +68,7 @@ class Transcriber:
         """Check if the engine is ready to accept transcription requests."""
         return self._engine.running()
 
-    def transcribe(self, path: Path | str) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path | str) -> tuple[str | None, str | None]:
         """
         Transcribe an audio file.
 

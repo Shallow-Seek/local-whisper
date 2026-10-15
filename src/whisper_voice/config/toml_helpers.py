@@ -5,10 +5,9 @@ TOML section helpers shared by config management and cli.
 """
 
 import re
-from typing import Optional
 
 
-def _find_in_section(content: str, section: str, key: str) -> Optional[str]:
+def _find_in_section(content: str, section: str, key: str) -> str | None:
     """Find a key's value within a specific TOML section. Returns the value or None."""
     in_section = False
     for line in content.splitlines():

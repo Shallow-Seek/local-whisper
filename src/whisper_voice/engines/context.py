@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Mapping, Optional
 
 MAX_CONTEXT_CHARS = 4096
 _PREFIX = "Vocabulary and preferred spellings: "
@@ -15,7 +15,7 @@ _PREFIX = "Vocabulary and preferred spellings: "
 class VocabularyContext:
     """A model prompt plus transparent inclusion/truncation metadata."""
 
-    text: Optional[str]
+    text: str | None
     included_rules: int
     eligible_rules: int
     truncated: bool

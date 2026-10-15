@@ -69,7 +69,7 @@ def _connect_and_send(socket_path: str, request: dict, timeout: float = 2.0) -> 
                 line, buf = buf.split(b"\n", 1)
                 if line.strip():
                     responses.append(json.loads(line.decode("utf-8")))
-        except sock_mod.timeout:
+        except TimeoutError:
             break
     client.close()
     return responses
@@ -207,7 +207,7 @@ class TestCommandServer:
                     buf += chunk
                     if b"\n" in buf:
                         break
-            except sock_mod.timeout:
+            except TimeoutError:
                 pass
             client.close()
 

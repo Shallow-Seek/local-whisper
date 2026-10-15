@@ -9,7 +9,6 @@ and implement the required methods.
 
 import re
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple, Union
 
 # Shared constants
 ERROR_TRUNCATE_LENGTH = 50  # Consistent error message truncation
@@ -50,7 +49,7 @@ class GrammarBackend(ABC):
         pass
 
     @abstractmethod
-    def fix(self, text: str) -> Tuple[str, Optional[str]]:
+    def fix(self, text: str) -> tuple[str, str | None]:
         """
         Fix grammar in the given text.
 
@@ -65,7 +64,7 @@ class GrammarBackend(ABC):
         pass
 
     @abstractmethod
-    def fix_with_mode(self, text: str, mode_id: str) -> Tuple[str, Optional[str]]:
+    def fix_with_mode(self, text: str, mode_id: str) -> tuple[str, str | None]:
         """
         Fix text using a specific transformation mode.
 
@@ -84,7 +83,7 @@ class GrammarBackend(ABC):
     # Shared utilities
     # ─────────────────────────────────────────────────────────────────
 
-    def _get_timeout(self, timeout_config: int) -> Union[int, Tuple[int, None]]:
+    def _get_timeout(self, timeout_config: int) -> int | tuple[int, None]:
         """
         Get timeout value for requests.
 
@@ -106,7 +105,7 @@ class GrammarBackend(ABC):
     # Shared text processing utilities
     # ─────────────────────────────────────────────────────────────────
 
-    def _split_lossless(self, text: str, max_chars: int) -> List[Tuple[str, str]]:
+    def _split_lossless(self, text: str, max_chars: int) -> list[tuple[str, str]]:
         """Split text into (chunk, trailing_separator) pairs.
 
         Joining every chunk + separator reproduces the input EXACTLY. The
@@ -123,7 +122,7 @@ class GrammarBackend(ABC):
 
         # Atoms are (piece, following_separator) where separators are the
         # exact whitespace runs removed from between pieces.
-        atoms: List[Tuple[str, str]] = []
+        atoms: list[tuple[str, str]] = []
         parts = re.split(r'(\n[ \t]*(?:\n[ \t]*)*)', text)
         for i in range(0, len(parts), 2):
             piece = parts[i]
@@ -132,7 +131,7 @@ class GrammarBackend(ABC):
                 atoms.append((piece, sep))
                 continue
             sub = re.split(r'((?<=[.!?])[ \t]+)', piece)
-            sub_atoms: List[Tuple[str, str]] = []
+            sub_atoms: list[tuple[str, str]] = []
             for j in range(0, len(sub), 2):
                 sp = sub[j]
                 ssep = sub[j + 1] if j + 1 < len(sub) else ""
@@ -149,7 +148,7 @@ class GrammarBackend(ABC):
             atoms.extend(sub_atoms)
 
         # Greedy packing that keeps intra-chunk separators verbatim.
-        chunks: List[Tuple[str, str]] = []
+        chunks: list[tuple[str, str]] = []
         current = ""
         current_sep = ""
         for piece, sep in atoms:
@@ -165,13 +164,13 @@ class GrammarBackend(ABC):
         chunks.append((current, current_sep))
         return chunks
 
-    def _fix_in_chunks(self, text: str, max_chars: int, mode_id: str) -> Tuple[str, Optional[str]]:
+    def _fix_in_chunks(self, text: str, max_chars: int, mode_id: str) -> tuple[str, str | None]:
         """Run fix_with_mode over lossless chunks, preserving separators."""
         pieces = self._split_lossless(text, max_chars)
         log_name = self.name
         from ..utils import log
         log(f"{log_name}: splitting {len(text)} chars into {len(pieces)} chunks", "INFO")
-        results: List[str] = []
+        results: list[str] = []
         for i, (chunk, sep) in enumerate(pieces):
             if chunk.strip():
                 log(f"{log_name}: processing chunk {i + 1}/{len(pieces)} ({len(chunk)} chars)", "INFO")
@@ -264,7 +263,7 @@ class GrammarBackend(ABC):
     ]
 
     @staticmethod
-    def _echoes_input_prefix(matched: str, original: Optional[str]) -> bool:
+    def _echoes_input_prefix(matched: str, original: str | None) -> bool:
         """True when the matched artifact is really the user's own text.
 
         A proofread result closely echoes its input, so any prefix the model
@@ -281,7 +280,7 @@ class GrammarBackend(ABC):
         return original.strip().lower().startswith(fragment)
 
     @staticmethod
-    def _echoes_input_suffix(matched: str, original: Optional[str]) -> bool:
+    def _echoes_input_suffix(matched: str, original: str | None) -> bool:
         """Suffix twin of _echoes_input_prefix."""
         if original is None:
             return False
@@ -290,7 +289,7 @@ class GrammarBackend(ABC):
             return False
         return original.strip().lower().endswith(fragment)
 
-    def _clean_result(self, result: str, original: Optional[str] = None) -> str:
+    def _clean_result(self, result: str, original: str | None = None) -> str:
         """
         Clean common artifacts from model output.
 

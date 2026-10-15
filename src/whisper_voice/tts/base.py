@@ -4,7 +4,7 @@
 
 import threading
 from abc import ABC, abstractmethod
-from typing import Callable, Optional
+from collections.abc import Callable
 
 
 class TTSProvider(ABC):
@@ -25,7 +25,7 @@ class TTSProvider(ABC):
     @abstractmethod
     def speak(self, text: str, stop_event: threading.Event,
               speaker: str = "af_sky",
-              on_playback_start: Optional[Callable] = None) -> None:
+              on_playback_start: Callable | None = None) -> None:
         """
         Synthesize and play text. Blocks until done or stop_event is set.
 

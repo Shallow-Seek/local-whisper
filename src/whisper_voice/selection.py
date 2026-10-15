@@ -18,7 +18,6 @@ intentionally leave new content behind.
 import subprocess
 import time
 import uuid
-from typing import List, Optional, Tuple
 
 from ApplicationServices import (
     AXUIElementCopyAttributeValue,
@@ -42,17 +41,17 @@ class ClipboardSnapshot:
     text). Falls back to plain text via pbpaste when AppKit is unavailable.
     """
 
-    def __init__(self, items: Optional[List[Tuple[str, bytes]]], text: Optional[str]):
+    def __init__(self, items: list[tuple[str, bytes]] | None, text: str | None):
         self._items = items
         self._text = text
 
     @classmethod
     def capture(cls) -> "ClipboardSnapshot":
-        items: Optional[List[Tuple[str, bytes]]] = None
+        items: list[tuple[str, bytes]] | None = None
         try:
             from AppKit import NSPasteboard
             pb = NSPasteboard.generalPasteboard()
-            captured: List[Tuple[str, bytes]] = []
+            captured: list[tuple[str, bytes]] = []
             for pb_type in (pb.types() or []):
                 data = pb.dataForType_(pb_type)
                 if data is not None:
@@ -64,7 +63,7 @@ class ClipboardSnapshot:
         return cls(items, text)
 
     @property
-    def text(self) -> Optional[str]:
+    def text(self) -> str | None:
         return self._text
 
     def restore(self) -> bool:
@@ -88,7 +87,7 @@ class ClipboardSnapshot:
         return False
 
 
-def read_clipboard_text() -> Optional[str]:
+def read_clipboard_text() -> str | None:
     """Read current clipboard as text. None when unreadable."""
     try:
         result = subprocess.run(
@@ -118,7 +117,7 @@ def write_clipboard_text(text: str) -> bool:
         return False
 
 
-def get_selected_text_accessibility() -> Optional[str]:
+def get_selected_text_accessibility() -> str | None:
     """Read the focused element's selected text via the Accessibility API."""
     try:
         system = AXUIElementCreateSystemWide()
@@ -149,7 +148,7 @@ def get_selected_text_accessibility() -> Optional[str]:
         return None
 
 
-def get_selected_text_via_copy(snapshot: ClipboardSnapshot) -> Optional[str]:
+def get_selected_text_via_copy(snapshot: ClipboardSnapshot) -> str | None:
     """Cmd+C fallback with a UUID marker.
 
     1. Write a unique marker to the clipboard (verified — a failed write
@@ -195,7 +194,7 @@ def get_selected_text_via_copy(snapshot: ClipboardSnapshot) -> Optional[str]:
         return None
 
 
-def get_selected_text(snapshot: ClipboardSnapshot) -> Optional[str]:
+def get_selected_text(snapshot: ClipboardSnapshot) -> str | None:
     """Read the current selection: Accessibility first, Cmd+C fallback."""
     text = get_selected_text_accessibility()
     if text:

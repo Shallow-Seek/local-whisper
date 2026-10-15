@@ -14,7 +14,6 @@ import time
 import wave
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 
@@ -65,7 +64,7 @@ class Backup:
         self._lock = threading.Lock()
         # Stem minted by save_audio for the in-flight session; consumed by
         # save_history so both files share it (audio<->text association).
-        self._session_stem: Optional[str] = None
+        self._session_stem: str | None = None
 
     @property
     def audio_path(self) -> Path:
@@ -103,13 +102,13 @@ class Backup:
         ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         return self._history_dir / f"{ts}.txt"
 
-    def _consume_session_stem(self) -> Optional[str]:
+    def _consume_session_stem(self) -> str | None:
         """Return and clear the stem save_audio minted for this session."""
         stem = self._session_stem
         self._session_stem = None
         return stem
 
-    def save_audio(self, data: np.ndarray) -> Optional[Path]:
+    def save_audio(self, data: np.ndarray) -> Path | None:
         """Save audio data to WAV file.
 
         Writes to last_recording.wav (for retry) AND a timestamped copy in
@@ -229,7 +228,7 @@ class Backup:
             except Exception as e:
                 log(f"Save history failed: {e}", "ERR")
 
-    def save_processed_audio(self, data: np.ndarray) -> Optional[Path]:
+    def save_processed_audio(self, data: np.ndarray) -> Path | None:
         """Save processed audio for transcription (separate from raw backup)."""
         config = get_config()
         with self._lock:
@@ -247,7 +246,7 @@ class Backup:
                 log(f"Save processed audio failed: {e}", "ERR")
                 return None
 
-    def save_audio_segment(self, data: np.ndarray, index: int) -> Optional[Path]:
+    def save_audio_segment(self, data: np.ndarray, index: int) -> Path | None:
         """Save a segment of a long recording. Returns path or None on failure."""
         config = get_config()
         if not _has_free_space(self._dir):

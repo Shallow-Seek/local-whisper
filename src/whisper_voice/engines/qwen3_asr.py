@@ -11,7 +11,6 @@ import concurrent.futures
 import gc
 import time
 from pathlib import Path
-from typing import Optional, Tuple
 
 from ..config import get_config
 from ..utils import log
@@ -22,7 +21,7 @@ from .status import mark_engine_model_warmed
 _DEFAULT_MODEL = DEFAULT_QWEN3_ASR_MODEL
 
 
-def _quick_duration(path: str) -> Optional[float]:
+def _quick_duration(path: str) -> float | None:
     """Return wav duration in seconds using the stdlib ``wave`` module.
     ``None`` if the file isn't a readable PCM wav (the model will raise
     a more descriptive error on the real call)."""
@@ -93,26 +92,26 @@ class Qwen3ASREngine(TranscriptionEngine):
     def running(self) -> bool:
         return self._model is not None
 
-    def transcribe(self, path: Path) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path) -> tuple[str | None, str | None]:
         return self._transcribe(path, context=None)
 
     def transcribe_with_context(
         self,
         path: Path,
-        context: Optional[str],
-    ) -> Tuple[Optional[str], Optional[str]]:
+        context: str | None,
+    ) -> tuple[str | None, str | None]:
         return self._transcribe(path, context=context)
 
     def _transcribe(
         self,
         path: Path,
-        context: Optional[str],
-    ) -> Tuple[Optional[str], Optional[str]]:
+        context: str | None,
+    ) -> tuple[str | None, str | None]:
         if self._model is None:
             return None, "Model not loaded"
 
         start = time.monotonic()
-        duration_seconds: Optional[float] = None
+        duration_seconds: float | None = None
         try:
             config = get_config()
             qwen3_cfg = getattr(config, "qwen3_asr", None)
@@ -173,7 +172,7 @@ class Qwen3ASREngine(TranscriptionEngine):
             self._clear_runtime_cache()
 
     @staticmethod
-    def _log_timing(start: float, duration: Optional[float], retried: bool) -> None:
+    def _log_timing(start: float, duration: float | None, retried: bool) -> None:
         elapsed = time.monotonic() - start
         if duration and duration > 0:
             rtf = elapsed / duration
