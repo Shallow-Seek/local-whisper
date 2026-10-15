@@ -6,8 +6,6 @@ cleaning and lossless chunk splitting."""
 import sys
 from unittest.mock import patch
 
-import pytest
-
 
 def _make_backend():
     for mod in list(sys.modules.keys()):

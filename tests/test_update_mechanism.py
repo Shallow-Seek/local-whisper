@@ -2,9 +2,8 @@
 # Copyright (c) 2025-2026 Soroush Yousefpour
 """Update command behavior."""
 
-from types import SimpleNamespace
-
 import subprocess
+from types import SimpleNamespace
 
 from whisper_voice.cli import doctor
 
