@@ -6,15 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.1] - 2026-10-15
+
 ### Changed
 
-- Refreshed the Python dependency lock and Flutter packages to their latest compatible releases.
-- The Android app now compiles Kotlin through the Android Gradle Plugin's built-in Kotlin support, ahead of Flutter dropping the separate Kotlin Gradle Plugin.
-- The mobile Qwen3-ASR catalog entry now describes the model family as multilingual with model-side language detection.
+- Updated Python dependencies, including Pydantic 2.14.1, huggingface-hub 2.2.0, MLX 0.32.4, and kokoro-mlx 0.1.3, and refreshed the Python 3.11 dependency lock.
+- Updated mobile build tooling and packages: Gradle 9.8.1, Kotlin 2.4.21, argmax-oss-swift (WhisperKit) 1.1.1, and the latest compatible Flutter packages. The Android app compiles Kotlin through the Android Gradle Plugin's built-in Kotlin support.
+- The iOS deployment target is iOS 16, the minimum WhisperKit supports. The previous iOS 15 requirement was not buildable.
+- The mobile Qwen3-ASR catalog entry describes the model family as multilingual with model-side language detection.
+- Python sources use current Python 3.11 typing idioms, and lint covers tests.
+- CI runs the Swift and Flutter jobs only when their sources change, validates documentation pull requests without deploying them, and Dependabot groups updates into one monthly pull request per ecosystem.
 
 ### Fixed
 
-- Documentation now matches current behavior: `wh listen` records until Ctrl+C with a 10 minute cap, the menu bar and settings tables reflect the current panels, Accessibility setup names the real runtime entry, mobile MLX and Kokoro packs are marked as catalog-only, and the macOS 26 requirement for the menu bar app and the Python 3.11/3.12 requirement are stated.
+- Android release builds declare the `INTERNET` permission, so model packs download instead of failing with a host lookup error ([#33](https://github.com/gabrimatic/local-whisper/issues/33)).
+- Documentation matches current behavior: `wh listen` records until Ctrl+C with a 10 minute cap, the menu bar and settings tables reflect the current panels, Accessibility setup names the real runtime entry, mobile MLX and Kokoro packs are marked as catalog-only, and the macOS 26 requirement for the menu bar app and the Python 3.11/3.12 requirement are stated.
+
+### Builds
+
+- The macOS bundle includes the menu app and native speech helper for Apple Silicon.
+- The Android arm64 APK is a preview build signed with the project's development key.
+- App Store and Play Store publishing are not configured.
 
 ## [1.11.0] - 2026-10-02
 
