@@ -16,7 +16,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # Pushes get one group per commit: the native jobs gate on each push's own
+  # diff, so cancelling a superseded push run would skip its Swift or Flutter checks.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: true
 
 permissions:

@@ -217,7 +217,7 @@ def test_general_ci_does_not_run_expensive_jobs_for_docs_only_changes():
     assert '      - "doc/**"' in workflow
     assert '      - "README.md"' in workflow
     assert '      - ".github/workflows/docs-pages.yml"' in workflow
-    assert "group: ci-${{ github.ref }}" in workflow
+    assert "group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}" in workflow
     assert "cancel-in-progress: true" in workflow
     assert "setup.sh syntax check" in workflow
     assert "runs-on: ubuntu-latest" in workflow
