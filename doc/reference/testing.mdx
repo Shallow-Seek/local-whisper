@@ -7,12 +7,11 @@ Use targeted checks for small changes and broader checks before shipping cross-s
 
 ## Python
 
-Local Whisper requires Python 3.11 or 3.12.
+Local Whisper requires Python 3.11 or 3.12. CI runs the suite on both against the locked dependencies in `uv.lock`.
 
 ```bash
-python3 -m venv .venv
+uv sync --locked --python 3.12
 source .venv/bin/activate
-pip install -r requirements.lock -e .
 pytest tests/
 ```
 

@@ -57,6 +57,16 @@ Repository = "https://github.com/gabrimatic/local-whisper"
 "Bug Tracker" = "https://github.com/gabrimatic/local-whisper/issues"
 Changelog = "https://github.com/gabrimatic/local-whisper/blob/main/CHANGELOG.md"
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "ruff>=0.16",
+]
+
+[tool.uv]
+# Local Whisper runs only on Apple Silicon Macs; resolve the lock for that platform.
+environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 120
@@ -78,7 +88,7 @@ include = [
     "/README.md",
     "/doc",
     "/LocalWhisperUI",
-    "/requirements.lock",
+    "/uv.lock",
     "/CHANGELOG.md",
     "/install.sh",
     "/setup.sh",
