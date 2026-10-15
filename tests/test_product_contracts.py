@@ -266,6 +266,14 @@ def test_ci_runs_flutter_static_and_widget_gates():
     assert 'directory: "/src/flutter/local_whisper"' in dependabot
 
 
+def test_android_release_manifest_allows_model_downloads():
+    """Release APKs merge only the main manifest, so it must declare network access for model packs."""
+    manifest = _read("src/flutter/local_whisper/android/app/src/main/AndroidManifest.xml")
+
+    assert '<uses-permission android:name="android.permission.INTERNET" />' in manifest
+    assert '<uses-permission android:name="android.permission.RECORD_AUDIO" />' in manifest
+
+
 def test_android_keyboard_honors_quick_insert_setting():
     """The Android input method should match the app's keyboard quick-insert toggle."""
     keyboard = _read(
