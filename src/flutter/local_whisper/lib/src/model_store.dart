@@ -103,7 +103,7 @@ class ModelStore {
       name: 'Parakeet-TDT v3',
       kind: ModelKind.transcription,
       description:
-          'Default Android offline ASR pack. Same model family as the macOS Parakeet engine, converted to INT8 ONNX for sherpa-onnx.',
+          'Default Android offline ASR pack, also runs on iPhone. Same model family as the macOS Parakeet engine, converted to INT8 ONNX for sherpa-onnx.',
       sizeLabel: '~640 MB ONNX pack',
       state: ModelInstallState.notInstalled,
       runtime: ModelRuntime.sherpaOnnx,
@@ -117,7 +117,7 @@ class ModelStore {
       name: 'Qwen3-ASR 0.6B',
       kind: ModelKind.transcription,
       description:
-          'Broader multilingual Android ASR pack for sherpa-onnx, including Persian, Arabic, CJK, and European languages.',
+          'Broader multilingual offline ASR pack for sherpa-onnx on Android and iPhone, including Persian, Arabic, CJK, and European languages.',
       sizeLabel: '~940 MB ONNX pack',
       state: ModelInstallState.notInstalled,
       runtime: ModelRuntime.sherpaOnnx,

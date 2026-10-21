@@ -6,6 +6,10 @@ import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 
 import 'models.dart';
 
+/// Model ids transcribed by sherpa-onnx in Dart on Android and iOS.
+bool isSherpaModel(String model) =>
+    model == 'parakeet_tdt_v3_sherpa' || model == 'qwen3_asr_sherpa';
+
 class SherpaSpeechService {
   Future<NativeSpeechResult> transcribeFile({
     required String audioPath,
@@ -135,7 +139,7 @@ sherpa.OfflineRecognizerConfig _recognizerConfig({
     'parakeet_tdt_v3_sherpa' => _parakeetConfig(modelPath),
     'qwen3_asr_sherpa' => _qwen3Config(modelPath),
     _ => throw LocalWhisperException(
-      '${_displayModelName(model)} is not wired for Android transcription.',
+      '${_displayModelName(model)} is not a Sherpa ONNX transcription pack.',
     ),
   };
 }

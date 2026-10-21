@@ -51,7 +51,8 @@ bool _canRecordWithModelOnCurrentPlatform(LocalModel model, int iosMajor) {
   return model.kind == ModelKind.transcription &&
       model.state == ModelInstallState.installed &&
       model.supportsIosMajor(iosMajor) &&
-      ((model.runtime == ModelRuntime.whisperKit &&
+      (((model.runtime == ModelRuntime.whisperKit ||
+                  model.runtime == ModelRuntime.sherpaOnnx) &&
               (model.localPath?.isNotEmpty ?? false)) ||
           model.runtime == ModelRuntime.appleSpeech);
 }
@@ -173,6 +174,7 @@ class _AppControllerState extends State<AppController>
     }
     return model.runtime == ModelRuntime.whisperKit ||
         model.runtime == ModelRuntime.appleSpeech ||
+        model.runtime == ModelRuntime.sherpaOnnx ||
         model.runtime == ModelRuntime.bundled;
   }
 
@@ -306,18 +308,15 @@ class _AppControllerState extends State<AppController>
   }
 
   List<LocalModel> _modelsForCurrentPlatform(List<LocalModel> models) {
-    // Sherpa ONNX transcription packs are Android-only (see
-    // _hasNativeRuntime); the reverse used to be unfiltered, so iOS users
-    // could download the Android Parakeet-TDT/Qwen3-ASR sherpa packs
-    // (~640-940MB) from the Models tab only to find they can never be
-    // selected for recording ("its native iOS runtime is not wired yet").
+    // Android only has the Sherpa ONNX runtime. iOS runs Sherpa ONNX packs
+    // too (through the sherpa_onnx_ios plugin), alongside WhisperKit and
+    // Apple Speech.
     return models
         .where(
           (model) =>
               model.kind != ModelKind.transcription ||
-              (Platform.isAndroid
-                  ? model.runtime == ModelRuntime.sherpaOnnx
-                  : model.runtime != ModelRuntime.sherpaOnnx),
+              !Platform.isAndroid ||
+              model.runtime == ModelRuntime.sherpaOnnx,
         )
         .toList(growable: false);
   }
@@ -874,7 +873,8 @@ class _AppControllerState extends State<AppController>
         _models = _modelsForCurrentPlatform(models);
         if (((Platform.isAndroid && model.runtime == ModelRuntime.sherpaOnnx) ||
                 (!Platform.isAndroid &&
-                    model.runtime == ModelRuntime.whisperKit)) &&
+                    (model.runtime == ModelRuntime.whisperKit ||
+                        model.runtime == ModelRuntime.sherpaOnnx))) &&
             model.kind == ModelKind.transcription) {
           _settings = _settings.copyWith(selectedModelId: model.id);
           _historyStore.saveSettings(_settings);
@@ -3053,7 +3053,8 @@ class _ModelCard extends StatelessWidget {
         : model.kind == ModelKind.transcription &&
               model.state == ModelInstallState.installed &&
               model.runtime != ModelRuntime.whisperKit &&
-              model.runtime != ModelRuntime.appleSpeech
+              model.runtime != ModelRuntime.appleSpeech &&
+              model.runtime != ModelRuntime.sherpaOnnx
         ? 'Installed pack. Native iOS runtime adapter still required.'
         : null;
     final actions = _modelActionButtons(

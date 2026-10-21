@@ -160,7 +160,29 @@ final class LocalSpeechBridge: NSObject, FlutterStreamHandler {
       }
       let url = FileManager.default.temporaryDirectory
         .appendingPathComponent("local-whisper-\(UUID().uuidString).wav")
-      let file = try AVAudioFile(forWriting: url, settings: format.settings)
+      // Sherpa ONNX packs are transcribed in Dart by sherpa-onnx, whose WAV
+      // reader expects 16-bit integer PCM. AVAudioFile converts the float
+      // tap buffers to the file format on write.
+      let file: AVAudioFile
+      if Self.isSherpaModel(model) {
+        let settings: [String: Any] = [
+          AVFormatIDKey: kAudioFormatLinearPCM,
+          AVSampleRateKey: format.sampleRate,
+          AVNumberOfChannelsKey: format.channelCount,
+          AVLinearPCMBitDepthKey: 16,
+          AVLinearPCMIsFloatKey: false,
+          AVLinearPCMIsBigEndianKey: false,
+          AVLinearPCMIsNonInterleaved: false,
+        ]
+        file = try AVAudioFile(
+          forWriting: url,
+          settings: settings,
+          commonFormat: format.commonFormat,
+          interleaved: format.isInterleaved
+        )
+      } else {
+        file = try AVAudioFile(forWriting: url, settings: format.settings)
+      }
 
       input.removeTap(onBus: 0)
       input.installTap(onBus: 0, bufferSize: 2048, format: format) { [weak self] buffer, _ in
@@ -207,6 +229,15 @@ final class LocalSpeechBridge: NSObject, FlutterStreamHandler {
     let model = selectedModel
     let modelPath = selectedModelPath
     let locale = selectedLocale
+    if Self.isSherpaModel(model) {
+      // Flutter transcribes Sherpa ONNX packs and deletes the file after.
+      result([
+        "audioPath": audioURL.path,
+        "duration": duration,
+        "localeId": locale,
+      ])
+      return
+    }
     // WhisperKit inference for a long recording can easily outlast the
     // few seconds iOS gives a backgrounded app before suspending it, which
     // would silently drop a transcription the user is waiting on if they
@@ -500,6 +531,10 @@ final class LocalSpeechBridge: NSObject, FlutterStreamHandler {
     }
 
     return target.path
+  }
+
+  private static func isSherpaModel(_ model: String) -> Bool {
+    model == "parakeet_tdt_v3_sherpa" || model == "qwen3_asr_sherpa"
   }
 
   private func whisperKitModelName(for model: String) throws -> String {

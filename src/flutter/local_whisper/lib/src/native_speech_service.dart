@@ -81,20 +81,20 @@ class NativeSpeechService {
 
   Future<NativeSpeechResult> stop() async {
     final value = await _method.invokeMapMethod<Object?, Object?>('stop');
-    if (Platform.isAndroid) {
-      final payload = value ?? const {};
-      final audioPath = payload['audioPath'] as String? ?? '';
-      if (audioPath.isNotEmpty) {
-        return _sherpa.transcribeFile(
-          audioPath: audioPath,
-          model: _activeModel,
-          modelPath: _activeModelPath,
-          locale: payload['localeId'] as String? ?? _activeLocale,
-          duration: (payload['duration'] as num?)?.toDouble() ?? 0,
-        );
-      }
+    // Android always, and iOS for Sherpa ONNX packs, hand back the recorded
+    // WAV instead of a transcript; sherpa-onnx transcribes it in Dart.
+    final payload = value ?? const {};
+    final audioPath = payload['audioPath'] as String? ?? '';
+    if (audioPath.isNotEmpty) {
+      return _sherpa.transcribeFile(
+        audioPath: audioPath,
+        model: _activeModel,
+        modelPath: _activeModelPath,
+        locale: payload['localeId'] as String? ?? _activeLocale,
+        duration: (payload['duration'] as num?)?.toDouble() ?? 0,
+      );
     }
-    return NativeSpeechResult.fromJson(value ?? const {});
+    return NativeSpeechResult.fromJson(payload);
   }
 
   Future<void> cancel() async {
@@ -115,7 +115,7 @@ class NativeSpeechService {
     if (!debugMode) {
       throw UnsupportedError('Debug transcription is unavailable in release.');
     }
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid || isSherpaModel(model)) {
       return _sherpa.transcribeFile(
         audioPath: audioPath,
         model: model,
