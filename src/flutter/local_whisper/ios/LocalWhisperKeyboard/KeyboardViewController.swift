@@ -1,8 +1,32 @@
 import UIKit
 
+/// The app group shared with Local Whisper. AltStore and SideStore rename app
+/// groups when they re-sign (appending the team ID) and record the new names
+/// under `ALTAppGroups` in Info.plist; read the extension's own and the
+/// containing app's, then fall back to the group this project declares.
+private enum SharedAppGroup {
+  static let declared = "group.info.gabrimatic.localWhisperFlutter"
+
+  static let identifier: String = {
+    let containingApp = Bundle(
+      url: Bundle.main.bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+    )
+    let renamed = [Bundle.main, containingApp]
+      .compactMap { $0?.object(forInfoDictionaryKey: "ALTAppGroups") as? [String] }
+      .flatMap { $0 }
+    return (renamed + [declared]).first {
+      FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: $0) != nil
+    } ?? declared
+  }()
+}
+
 final class KeyboardViewController: UIInputViewController {
-  private let appGroup = "group.info.gabrimatic.localWhisperFlutter"
+  private let appGroup = SharedAppGroup.identifier
   private let verificationToken = "[[LOCAL_WHISPER_KEYBOARD_VERIFIED]]"
+  private let idleSubtitle = "offline dictation"
+  private let subtitle = UILabel()
+  private var dictationPoll: Timer?
+  private var dictationPollStartedAt = Date()
   private let accent = UIColor(red: 117 / 255, green: 227 / 255, blue: 190 / 255, alpha: 1.0)
   private let panel = UIColor(red: 22 / 255, green: 26 / 255, blue: 29 / 255, alpha: 1.0)
   private let surface = UIColor(red: 44 / 255, green: 50 / 255, blue: 57 / 255, alpha: 1.0)
@@ -26,6 +50,26 @@ final class KeyboardViewController: UIInputViewController {
     view.isOpaque = true
     view.clipsToBounds = true
     buildKeyboard()
+  }
+
+  override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    insertFinishedDictation()
+  }
+
+  override func viewDidAppear(_ animated: Bool) {
+    super.viewDidAppear(animated)
+    if pendingDictationId != nil { startDictationPoll() }
+  }
+
+  override func viewWillDisappear(_ animated: Bool) {
+    super.viewWillDisappear(animated)
+    stopDictationPoll()
+  }
+
+  override func textDidChange(_ textInput: UITextInput?) {
+    super.textDidChange(textInput)
+    insertFinishedDictation()
   }
 
   private func buildKeyboard() {
@@ -80,26 +124,29 @@ final class KeyboardViewController: UIInputViewController {
     title.font = .systemFont(ofSize: 14, weight: .semibold)
     title.textColor = .white
 
-    let subtitle = UILabel()
-    subtitle.text = "offline dictation"
+    subtitle.text = idleSubtitle
     subtitle.font = .systemFont(ofSize: 10, weight: .medium)
     subtitle.textColor = UIColor.white.withAlphaComponent(0.66)
     subtitle.adjustsFontSizeToFitWidth = true
     subtitle.minimumScaleFactor = 0.82
+    subtitle.numberOfLines = 2
 
     let labels = UIStackView(arrangedSubviews: [title, subtitle])
     labels.axis = .vertical
     labels.spacing = 2
     labels.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-    let verifyButton = key("Verify", action: #selector(verifySetup), style: .accent)
-    verifyButton.widthAnchor.constraint(equalToConstant: 108).isActive = true
+    let dictateButton = key("🎤 Dictate", action: #selector(startDictation), style: .accent)
+    dictateButton.accessibilityLabel = "Dictate"
+    dictateButton.widthAnchor.constraint(equalToConstant: 112).isActive = true
+    let verifyButton = key("Verify", action: #selector(verifySetup), style: .utility)
+    verifyButton.widthAnchor.constraint(equalToConstant: 60).isActive = true
 
-    let row = UIStackView(arrangedSubviews: [labels, verifyButton])
+    let row = UIStackView(arrangedSubviews: [labels, dictateButton, verifyButton])
     row.axis = .horizontal
     row.alignment = .center
     row.distribution = .fill
-    row.spacing = 12
+    row.spacing = 8
     return row
   }
 
@@ -203,6 +250,95 @@ final class KeyboardViewController: UIInputViewController {
 
   @objc private func advanceKeyboard() {
     advanceToNextInputMode()
+  }
+
+  // MARK: Dictation
+  //
+  // Keyboards cannot use the microphone, so 🎤 opens Local Whisper with a
+  // request id. The app records, transcribes, and leaves the text in the
+  // shared app group under that id; when the user taps ◀ back to this app,
+  // the keyboard inserts it.
+
+  private var sharedDefaults: UserDefaults? { UserDefaults(suiteName: appGroup) }
+
+  private var pendingDictationId: String? {
+    sharedDefaults?.string(forKey: "dictation.requestId")
+  }
+
+  @objc private func startDictation() {
+    tapFeedback()
+    guard hasFullAccess, let defaults = sharedDefaults else {
+      subtitle.text = "Allow Full Access in Settings to dictate"
+      return
+    }
+    let id = UUID().uuidString
+    defaults.removeObject(forKey: "dictation.resultId")
+    defaults.removeObject(forKey: "dictation.resultText")
+    defaults.set(id, forKey: "dictation.requestId")
+    defaults.synchronize()
+    guard let url = URL(string: "localwhisper://dictate?id=\(id)"), openContainingApp(url) else {
+      subtitle.text = "Open Local Whisper to dictate"
+      return
+    }
+    subtitle.text = "Speak in Local Whisper, then tap ◀"
+    startDictationPoll()
+  }
+
+  /// Inserts the transcript for the pending request once the app has left it.
+  private func insertFinishedDictation() {
+    guard
+      let defaults = sharedDefaults,
+      let id = defaults.string(forKey: "dictation.requestId"),
+      defaults.string(forKey: "dictation.resultId") == id,
+      let text = defaults.string(forKey: "dictation.resultText")
+    else { return }
+    defaults.removeObject(forKey: "dictation.requestId")
+    defaults.removeObject(forKey: "dictation.resultId")
+    defaults.removeObject(forKey: "dictation.resultText")
+    defaults.synchronize()
+    stopDictationPoll()
+    subtitle.text = idleSubtitle
+    textDocumentProxy.insertText(text)
+  }
+
+  /// Checks for the transcript while the keyboard is visible, in case it
+  /// arrives after the user is already back (transcription still running).
+  private func startDictationPoll() {
+    stopDictationPoll()
+    dictationPollStartedAt = Date()
+    dictationPoll = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+      guard let self else { return }
+      if Date().timeIntervalSince(self.dictationPollStartedAt) > 600 {
+        self.stopDictationPoll()
+        return
+      }
+      self.insertFinishedDictation()
+    }
+  }
+
+  private func stopDictationPoll() {
+    dictationPoll?.invalidate()
+    dictationPoll = nil
+  }
+
+  /// `UIApplication.shared` is unavailable to extensions, so find the
+  /// application through the responder chain and call
+  /// `open(_:options:completionHandler:)` through the Objective-C runtime.
+  private func openContainingApp(_ url: URL) -> Bool {
+    typealias OpenURL = @convention(c) (AnyObject, Selector, NSURL, NSDictionary, AnyObject?) -> Void
+    let selector = NSSelectorFromString("openURL:options:completionHandler:")
+    var responder: UIResponder? = self
+    while let current = responder {
+      if current is UIApplication,
+        let method = class_getInstanceMethod(type(of: current), selector)
+      {
+        let open = unsafeBitCast(method_getImplementation(method), to: OpenURL.self)
+        open(current, selector, url as NSURL, NSDictionary(), nil)
+        return true
+      }
+      responder = current.next
+    }
+    return false
   }
 
   @objc private func verifySetup() {

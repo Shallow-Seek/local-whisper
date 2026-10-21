@@ -55,6 +55,16 @@ Custom modes use deterministic offline formatting. Instructions containing bulle
 
 The iOS keyboard reads haptics and quick-insert settings from the shared app group. The Android keyboard reads the same settings from setup preferences. Turning off quick insert keeps Verify, Space, New line, and Delete available while hiding mode and punctuation shortcuts.
 
+### Dictating from the iOS keyboard
+
+iOS keyboards cannot use the microphone, so the keyboard's **🎤 Dictate** key hands off to the app:
+
+1. Allow Full Access for Local Whisper Keyboard in Settings → General → Keyboard → Keyboards.
+2. In any text field, switch to Local Whisper Keyboard and tap **🎤 Dictate**. Local Whisper opens and starts recording with the selected model.
+3. Tap stop, then tap **◀** at the top left to return. The keyboard types the transcript into the field.
+
+If the app was re-signed by AltStore or SideStore, the app and keyboard find the renamed app group through `ALTAppGroups` in Info.plist.
+
 ## Model packs
 
 | Pack | Approx size | Notes |

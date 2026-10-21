@@ -12,5 +12,17 @@ class SceneDelegate: FlutterSceneDelegate {
       LocalSpeechBridge.shared.register(with: controller.binaryMessenger)
       LocalSetupBridge.shared.register(with: controller.binaryMessenger)
     }
+    // A cold launch from the keyboard's 🎤 key arrives here, not in
+    // openURLContexts.
+    for context in connectionOptions.urlContexts {
+      LocalSetupBridge.shared.handle(url: context.url)
+    }
+  }
+
+  override func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    super.scene(scene, openURLContexts: URLContexts)
+    for context in URLContexts {
+      LocalSetupBridge.shared.handle(url: context.url)
+    }
   }
 }

@@ -52,6 +52,30 @@ class NativeSetupService {
     await _method.invokeMethod<void>('markKeyboardSeen');
   }
 
+  /// Calls [onRequest] when the keyboard's 🎤 key opens the app while it is
+  /// already running. Cold launches are picked up by [takePendingDictation].
+  void listenForDictationRequests(void Function() onRequest) {
+    _method.setMethodCallHandler((call) async {
+      if (call.method == 'dictationRequested') onRequest();
+    });
+  }
+
+  /// The id of a keyboard dictation request not yet handled, if any.
+  Future<String?> takePendingDictation() {
+    return _method.invokeMethod<String>('takePendingDictation');
+  }
+
+  /// Hands [text] to the keyboard that sent request [id].
+  Future<void> completeDictation({
+    required String id,
+    required String text,
+  }) async {
+    await _method.invokeMethod<void>('completeDictation', {
+      'id': id,
+      'text': text,
+    });
+  }
+
   Future<void> syncKeyboardSettings({
     required bool haptics,
     required bool quickInsert,

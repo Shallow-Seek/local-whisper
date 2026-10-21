@@ -86,13 +86,23 @@ class NativeSpeechService {
     final payload = value ?? const {};
     final audioPath = payload['audioPath'] as String? ?? '';
     if (audioPath.isNotEmpty) {
-      return _sherpa.transcribeFile(
-        audioPath: audioPath,
-        model: _activeModel,
-        modelPath: _activeModelPath,
-        locale: payload['localeId'] as String? ?? _activeLocale,
-        duration: (payload['duration'] as num?)?.toDouble() ?? 0,
-      );
+      return _sherpa
+          .transcribeFile(
+            audioPath: audioPath,
+            model: _activeModel,
+            modelPath: _activeModelPath,
+            locale: payload['localeId'] as String? ?? _activeLocale,
+            duration: (payload['duration'] as num?)?.toDouble() ?? 0,
+          )
+          .whenComplete(() async {
+            // iOS holds background run time open for the transcription.
+            if (!Platform.isIOS) return;
+            try {
+              await _method.invokeMethod<void>('finishTranscription');
+            } catch (_) {
+              // Background time also ends on its own when iOS expires it.
+            }
+          });
     }
     return NativeSpeechResult.fromJson(payload);
   }

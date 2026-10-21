@@ -118,6 +118,8 @@ class _AppControllerState extends State<AppController>
   RecorderPhase _phase = RecorderPhase.idle;
   NativeSpeechStatus _nativeStatus = const NativeSpeechStatus.unknown();
   NativeSpeechResult? _lastResult;
+  // Request id of the keyboard 🎤 tap the current recording answers.
+  String? _keyboardDictationId;
   KeyboardSetupStatus _keyboardStatus = const KeyboardSetupStatus.unknown();
   String _partialText = '';
   String? _error;
@@ -186,6 +188,9 @@ class _AppControllerState extends State<AppController>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (Platform.isIOS) {
+      _setup.listenForDictationRequests(_takeKeyboardDictation);
+    }
     _levelSubscription = _speech.levelStream.listen((level) {
       if (mounted) {
         setState(() => _level = level);
@@ -222,6 +227,29 @@ class _AppControllerState extends State<AppController>
         );
       }
     }
+    if (state == AppLifecycleState.resumed && Platform.isIOS) {
+      _takeKeyboardDictation();
+    }
+  }
+
+  /// Starts recording for a 🎤 tap on the Local Whisper keyboard. The
+  /// request waits on the native side until setup is done and the app is in
+  /// the foreground, where the microphone can start.
+  Future<void> _takeKeyboardDictation() async {
+    if (!_bootstrapped || _showOnboarding) return;
+    if (WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed) {
+      return;
+    }
+    final String? id;
+    try {
+      id = await _setup.takePendingDictation();
+    } catch (_) {
+      return;
+    }
+    if (id == null || id.isEmpty || !mounted) return;
+    _keyboardDictationId = id;
+    setState(() => _tabIndex = 0);
+    if (_phase != RecorderPhase.recording) await _startRecording();
   }
 
   Future<void> _bootstrap() async {
@@ -305,6 +333,7 @@ class _AppControllerState extends State<AppController>
       _showOnboarding = !onboardingComplete;
     });
     await _syncKeyboardSettings(normalizedSettings);
+    if (Platform.isIOS) await _takeKeyboardDictation();
   }
 
   List<LocalModel> _modelsForCurrentPlatform(List<LocalModel> models) {
@@ -474,6 +503,7 @@ class _AppControllerState extends State<AppController>
       });
       _startRecordingTicker();
     } on Object catch (error) {
+      _keyboardDictationId = null;
       _showError(_friendlyError(error));
     }
   }
@@ -549,12 +579,21 @@ class _AppControllerState extends State<AppController>
       if (autoStopped) {
         _toast('Max duration reached. Text is ready.');
       }
+      final keyboardId = _keyboardDictationId;
+      if (keyboardId != null) {
+        _keyboardDictationId = null;
+        await _setup.completeDictation(id: keyboardId, text: polished);
+        if (!mounted) return;
+        _toast('Sent to the keyboard. Tap ◀ at the top left to go back.');
+      }
     } on Object catch (error) {
+      _keyboardDictationId = null;
       _showError(_friendlyError(error));
     }
   }
 
   Future<void> _cancelRecording({String? message}) async {
+    _keyboardDictationId = null;
     _maxDurationTimer?.cancel();
     _recordingTicker?.cancel();
     await _speech.cancel();

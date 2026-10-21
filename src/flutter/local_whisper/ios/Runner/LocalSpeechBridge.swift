@@ -77,6 +77,9 @@ final class LocalSpeechBridge: NSObject, FlutterStreamHandler {
     case "cancel":
       cancel()
       result(nil)
+    case "finishTranscription":
+      endTranscriptionBackgroundTask()
+      result(nil)
     case "debugTranscribeFile":
       let args = call.arguments as? [String: Any]
       let audioPath = args?["audioPath"] as? String ?? ""
@@ -231,6 +234,10 @@ final class LocalSpeechBridge: NSObject, FlutterStreamHandler {
     let locale = selectedLocale
     if Self.isSherpaModel(model) {
       // Flutter transcribes Sherpa ONNX packs and deletes the file after.
+      // Keep running while it does, so a user who switches back to the
+      // app they were typing in still gets the text; Flutter ends this
+      // with finishTranscription.
+      beginTranscriptionBackgroundTask()
       result([
         "audioPath": audioURL.path,
         "duration": duration,
