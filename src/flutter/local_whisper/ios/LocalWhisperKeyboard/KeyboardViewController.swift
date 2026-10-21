@@ -27,6 +27,9 @@ final class KeyboardViewController: UIInputViewController {
   private let subtitle = UILabel()
   private var dictationPoll: Timer?
   private var dictationPollStartedAt = Date()
+  /// Pasteboard type the app tags its transcript with, holding the request
+  /// id. Used when the app group turns out not to be shared after re-signing.
+  private let dictationIdType = "info.gabrimatic.localwhisper.dictation-id"
   private let accent = UIColor(red: 117 / 255, green: 227 / 255, blue: 190 / 255, alpha: 1.0)
   private let panel = UIColor(red: 22 / 255, green: 26 / 255, blue: 29 / 255, alpha: 1.0)
   private let surface = UIColor(red: 44 / 255, green: 50 / 255, blue: 57 / 255, alpha: 1.0)
@@ -52,14 +55,14 @@ final class KeyboardViewController: UIInputViewController {
     buildKeyboard()
   }
 
-  override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-    insertFinishedDictation()
-  }
-
   override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
-    if pendingDictationId != nil { startDictationPoll() }
+    // Inserting from viewWillAppear can run before the host text field is
+    // attached again, and the text is silently dropped. Poll from here on.
+    if pendingDictationId != nil {
+      subtitle.text = "Waiting for text from Local Whisper…"
+      startDictationPoll()
+    }
   }
 
   override func viewWillDisappear(_ animated: Bool) {
@@ -287,10 +290,10 @@ final class KeyboardViewController: UIInputViewController {
   /// Inserts the transcript for the pending request once the app has left it.
   private func insertFinishedDictation() {
     guard
+      isViewLoaded, view.window != nil,
       let defaults = sharedDefaults,
       let id = defaults.string(forKey: "dictation.requestId"),
-      defaults.string(forKey: "dictation.resultId") == id,
-      let text = defaults.string(forKey: "dictation.resultText")
+      let text = finishedDictationText(for: id, defaults: defaults)
     else { return }
     defaults.removeObject(forKey: "dictation.requestId")
     defaults.removeObject(forKey: "dictation.resultId")
@@ -301,6 +304,23 @@ final class KeyboardViewController: UIInputViewController {
     textDocumentProxy.insertText(text)
   }
 
+  private func finishedDictationText(for id: String, defaults: UserDefaults) -> String? {
+    if defaults.string(forKey: "dictation.resultId") == id,
+      let text = defaults.string(forKey: "dictation.resultText")
+    {
+      return text
+    }
+    // The app also puts the transcript on the pasteboard, tagged with the
+    // request id, in case the app group is not shared between the two.
+    let pasteboard = UIPasteboard.general
+    guard
+      pasteboard.contains(pasteboardTypes: [dictationIdType]),
+      let tag = pasteboard.data(forPasteboardType: dictationIdType),
+      String(decoding: tag, as: UTF8.self) == id
+    else { return nil }
+    return pasteboard.string
+  }
+
   /// Checks for the transcript while the keyboard is visible, in case it
   /// arrives after the user is already back (transcription still running).
   private func startDictationPoll() {
@@ -308,11 +328,16 @@ final class KeyboardViewController: UIInputViewController {
     dictationPollStartedAt = Date()
     dictationPoll = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
       guard let self else { return }
-      if Date().timeIntervalSince(self.dictationPollStartedAt) > 600 {
+      let waited = Date().timeIntervalSince(self.dictationPollStartedAt)
+      if waited > 600 {
         self.stopDictationPoll()
         return
       }
       self.insertFinishedDictation()
+      if waited > 15, self.dictationPoll != nil, self.view.window != nil {
+        // Shown so a failed handoff can be told apart from a slow one.
+        self.subtitle.text = "No text yet · \(self.appGroup)"
+      }
     }
   }
 

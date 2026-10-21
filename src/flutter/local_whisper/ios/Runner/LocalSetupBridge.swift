@@ -93,7 +93,14 @@ final class LocalSetupBridge: NSObject {
   /// Leaves the transcript where the keyboard picks it up when the user
   /// returns to the app they were typing in.
   private func completeDictation(id: String, text: String) {
-    guard !id.isEmpty, let defaults = UserDefaults(suiteName: appGroup) else { return }
+    guard !id.isEmpty else { return }
+    // Also on the pasteboard, tagged with the request id, so the keyboard
+    // still gets the text if re-signing left the app group unshared.
+    UIPasteboard.general.setItems([[
+      "public.utf8-plain-text": text,
+      "info.gabrimatic.localwhisper.dictation-id": Data(id.utf8),
+    ]])
+    guard let defaults = UserDefaults(suiteName: appGroup) else { return }
     defaults.set(text, forKey: "dictation.resultText")
     defaults.set(id, forKey: "dictation.resultId")
     defaults.synchronize()
