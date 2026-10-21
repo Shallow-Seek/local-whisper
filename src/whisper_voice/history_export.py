@@ -10,9 +10,9 @@ raw/corrected distinction where available.
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from datetime import datetime
 from pathlib import Path
-from typing import Iterable, Optional
 
 from .backup import Backup
 
@@ -22,7 +22,7 @@ SUPPORTED_FORMATS = ("md", "txt", "json")
 def export_history(
     out_path: Path,
     fmt: str = "md",
-    limit: Optional[int] = None,
+    limit: int | None = None,
 ) -> int:
     """Write transcription history to *out_path* in *fmt*.
 

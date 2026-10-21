@@ -4,14 +4,30 @@ Contribute focused fixes: transcription engines, grammar backends, mobile improv
 
 ## Development Setup
 
+Requires [uv](https://docs.astral.sh/uv/) (`brew install uv`).
+
 ```bash
 git clone https://github.com/gabrimatic/local-whisper.git
 cd local-whisper
-python3 -m venv .venv
+uv sync --locked --python 3.12   # Python 3.11 or 3.12, locked dependencies in .venv
 source .venv/bin/activate
-pip install -e .
 wh build   # builds the Swift UI app
 ```
+
+### Dependency lock
+
+`uv.lock` pins every Python dependency for Apple Silicon macOS (`[tool.uv] environments` in `pyproject.toml`). CI installs it with `uv sync --locked` on Python 3.11 and 3.12 and fails if it is out of date with `pyproject.toml`. Dependabot's `uv` ecosystem updates the pin and the lock in one pull request.
+
+After editing dependencies in `pyproject.toml`, regenerate the lock with:
+
+```bash
+uv lock                          # keep current pins where still valid
+uv lock --upgrade-package <name> # move one package to its newest allowed version
+```
+
+### Releases and the Homebrew formula
+
+The Homebrew formula installs exactly the runtime set in the release's `uv.lock`, evaluated for its Python 3.12 on Apple Silicon. After tagging a release, update the formula in [homebrew-local-whisper](https://github.com/gabrimatic/homebrew-local-whisper): point `url` and `sha256` at the new tag tarball, drop any `revision` line, set the `native-ui` resource to the release's menu-app zip, and run `uv run scripts/formula_resources.py --write` there to rewrite the Python resources from the lock. The tap's CI fails if the resources drift from the lock.
 
 Start the service:
 
@@ -75,7 +91,7 @@ src/whisper_voice/
 ├── engines/
 │   ├── base.py            # TranscriptionEngine base
 │   ├── parakeet.py        # Parakeet-TDT v3 (default, MLX)
-│   ├── qwen3_asr.py       # Qwen3-ASR (MLX, English only)
+│   ├── qwen3_asr.py       # Qwen3-ASR (MLX, multilingual)
 │   └── whisperkit.py      # WhisperKit (local server alternative)
 └── backends/
     ├── base.py            # Backend base

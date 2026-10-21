@@ -7,7 +7,6 @@ To add a new mode, simply add an entry to MODE_REGISTRY.
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Optional
 
 
 @dataclass
@@ -102,7 +101,7 @@ Return the text with only these fixes. Change no words, add nothing, remove noth
 # MODE REGISTRY
 # ============================================================================
 
-MODE_REGISTRY: Dict[str, Mode] = {
+MODE_REGISTRY: dict[str, Mode] = {
     "proofread": Mode(
         id="proofread",
         name="Proofread",
@@ -134,12 +133,12 @@ MODE_REGISTRY: Dict[str, Mode] = {
 }
 
 
-def get_mode(mode_id: str) -> Optional[Mode]:
+def get_mode(mode_id: str) -> Mode | None:
     """Get a mode by ID."""
     return MODE_REGISTRY.get(mode_id)
 
 
-def get_all_modes() -> List[Mode]:
+def get_all_modes() -> list[Mode]:
     """Get all available modes."""
     return list(MODE_REGISTRY.values())
 
@@ -204,7 +203,7 @@ Output:
 """
 
 
-def get_mode_lm_studio_messages(mode_id: str, text: str) -> List[dict]:
+def get_mode_lm_studio_messages(mode_id: str, text: str) -> list[dict]:
     """
     Build LM Studio messages for a mode.
 

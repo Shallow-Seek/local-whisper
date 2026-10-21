@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Optional
 
 from .config import CONFIG_DIR
 from .utils import log
@@ -46,7 +45,7 @@ def pending_recoveries() -> list[Path]:
     return [path]
 
 
-def marker_age_seconds() -> Optional[float]:
+def marker_age_seconds() -> float | None:
     try:
         return time.time() - _MARKER.stat().st_mtime
     except (OSError, FileNotFoundError):

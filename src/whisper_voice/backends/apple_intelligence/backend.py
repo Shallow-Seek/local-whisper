@@ -10,7 +10,6 @@ import asyncio
 import concurrent.futures
 import gc
 import threading
-from typing import Optional, Tuple
 
 from ...config import get_config
 from ...utils import log
@@ -34,9 +33,9 @@ class AppleIntelligenceBackend(GrammarBackend):
     """
 
     def __init__(self):
-        self._model: Optional[object] = None
-        self._loop: Optional[asyncio.AbstractEventLoop] = None
-        self._loop_thread: Optional[threading.Thread] = None
+        self._model: object | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._loop_thread: threading.Thread | None = None
         self._model_lock = threading.Lock()
         self._loop_lock = threading.Lock()
         # Apple FM rejects concurrent requests (ConcurrentRequestsError), so
@@ -106,11 +105,11 @@ class AppleIntelligenceBackend(GrammarBackend):
         log("Apple Intelligence ready", "OK")
         return True
 
-    def fix(self, text: str) -> Tuple[str, Optional[str]]:
+    def fix(self, text: str) -> tuple[str, str | None]:
         """Fix grammar using Apple Intelligence. Delegates to transcription mode."""
         return self.fix_with_mode(text, "transcription")
 
-    def fix_with_mode(self, text: str, mode_id: str) -> Tuple[str, Optional[str]]:
+    def fix_with_mode(self, text: str, mode_id: str) -> tuple[str, str | None]:
         """Fix text using a specific transformation mode."""
         if not text or len(text.strip()) < 3:
             log("Text too short for mode processing, returning as-is", "INFO")
@@ -189,7 +188,7 @@ class AppleIntelligenceBackend(GrammarBackend):
             )
             self._loop_thread.start()
 
-    def _run_async(self, coro, timeout: Optional[float] = None) -> str:
+    def _run_async(self, coro, timeout: float | None = None) -> str:
         """Submit a coroutine to the background loop and wait for the result."""
         self._ensure_loop()
         future = asyncio.run_coroutine_threadsafe(coro, self._loop)

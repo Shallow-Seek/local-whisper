@@ -22,7 +22,6 @@ the preceding word).
 from __future__ import annotations
 
 import re
-from typing import Dict, Optional, Tuple
 
 from .config import get_config
 
@@ -38,7 +37,7 @@ from .config import get_config
 # Punctuation commands eat the preceding space and tack the punctuation onto
 # the previous word. Structural commands (new line, new paragraph) insert
 # whitespace and let the grammar pass normalize capitalization.
-DEFAULT_COMMANDS: Dict[str, str] = {
+DEFAULT_COMMANDS: dict[str, str] = {
     # Structural
     "new line": "\n",
     "new paragraph": "\n\n",
@@ -100,7 +99,7 @@ _SCRATCH_VALUE = "__SCRATCH__"
 _SCRATCH_TOKEN = "\ue000\ue004\ue001"
 
 
-def _attach_direction(phrase: str, replacement: str) -> Optional[str]:
+def _attach_direction(phrase: str, replacement: str) -> str | None:
     """Which side a command's output glues to.
 
     "open ..." commands are left-attaching and "close ..." commands
@@ -133,7 +132,7 @@ def _attach_direction(phrase: str, replacement: str) -> Optional[str]:
 
 def apply_dictation_commands(
     text: str,
-    commands: Optional[Dict[str, str]] = None,
+    commands: dict[str, str] | None = None,
 ) -> str:
     """Apply dictation commands to raw transcription text.
 
@@ -161,7 +160,7 @@ def apply_dictation_commands(
     return _apply(text, commands)
 
 
-def merge_commands(user_commands: Optional[Dict[str, str]]) -> Dict[str, str]:
+def merge_commands(user_commands: dict[str, str] | None) -> dict[str, str]:
     """Merge user overrides onto the defaults.
 
     Keys are lowercased: matching is case-insensitive, so a user override
@@ -201,7 +200,7 @@ def strip_speech_fillers(text: str) -> str:
 # Internals
 # ---------------------------------------------------------------------------
 
-def _apply(text: str, commands: Dict[str, str]) -> str:
+def _apply(text: str, commands: dict[str, str]) -> str:
     # Sort longer phrases first so "new paragraph" wins over "new".
     ordered = sorted(commands.items(), key=lambda kv: (-len(kv[0].split()), -len(kv[0])))
     protected: list = []
@@ -384,7 +383,7 @@ def _apply_scratch(text: str) -> str:
 # Introspection (exposed to the Swift UI via config_snapshot)
 # ---------------------------------------------------------------------------
 
-def effective_commands() -> Dict[str, str]:
+def effective_commands() -> dict[str, str]:
     """Return the merged default + user-override command set."""
     cfg = get_config()
     commands = dict(DEFAULT_COMMANDS)
@@ -394,7 +393,7 @@ def effective_commands() -> Dict[str, str]:
     return commands
 
 
-def describe_rule(spoken: str, replacement: str) -> Tuple[str, str]:
+def describe_rule(spoken: str, replacement: str) -> tuple[str, str]:
     """Render a rule for display. Newlines and tabs become visible glyphs."""
     rendered = (
         replacement.replace("\n\n", "¶¶")

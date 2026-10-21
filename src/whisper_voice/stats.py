@@ -13,7 +13,6 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import List, Tuple
 
 from .backup import Backup
 from .config import get_config
@@ -30,8 +29,8 @@ class UsageStats:
     sessions_past_30d: int = 0
     first_session: datetime | None = None
     last_session: datetime | None = None
-    top_words: List[Tuple[str, int]] = field(default_factory=list)
-    top_replacements_triggered: List[Tuple[str, int]] = field(default_factory=list)
+    top_words: list[tuple[str, int]] = field(default_factory=list)
+    top_replacements_triggered: list[tuple[str, int]] = field(default_factory=list)
 
 
 _STOPWORDS = {

@@ -82,7 +82,7 @@ def test_quoted_csv_with_embedded_comma_roundtrips(tmp_path, captured):
 
 def test_bom_stripped_from_first_key(tmp_path, captured):
     f = tmp_path / "rules.csv"
-    f.write_bytes("﻿gonna,going to\n".encode("utf-8"))
+    f.write_bytes("﻿gonna,going to\n".encode())
     cli_settings._import_replacements(str(f))
     assert captured.rules == {"gonna": "going to"}
 

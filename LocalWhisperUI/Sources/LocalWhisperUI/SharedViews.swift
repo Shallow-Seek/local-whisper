@@ -182,13 +182,13 @@ struct StepperRowControl: View {
     let step: Int
     let display: String
     var displayWidth: CGFloat = 70
-    let onChange: (Int) -> Void
+    let onChange: @MainActor @Sendable (Int) -> Void
 
     var body: some View {
         HStack(spacing: Theme.Spacing.s) {
             Text(display)
                 .monoStat(width: displayWidth)
-            Stepper("", value: Binding(get: { value }, set: onChange), in: range, step: step)
+            Stepper("", value: Binding(get: { value }, set: { onChange($0) }), in: range, step: step)
                 .labelsHidden()
         }
     }

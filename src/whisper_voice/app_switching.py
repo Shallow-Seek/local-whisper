@@ -205,7 +205,7 @@ class SwitchingMixin:
         # Spin up an inline-progress watcher so the Settings panel can show a
         # real bar. Skipped for engines like WhisperKit whose weights live
         # outside the HF cache.
-        watcher: 'DownloadWatcher | None' = None
+        watcher: DownloadWatcher | None = None
         cancel_event = threading.Event()
         old_unloaded = False
         if needs_download and cache_dir and hf_repo:

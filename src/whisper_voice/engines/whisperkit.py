@@ -10,7 +10,6 @@ import atexit
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -107,7 +106,7 @@ class WhisperKitEngine(TranscriptionEngine):
         log("Whisper server timeout", "ERR")
         return False
 
-    def transcribe(self, path: Path) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path) -> tuple[str | None, str | None]:
         """
         Transcribe audio file.
 

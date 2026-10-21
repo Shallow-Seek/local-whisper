@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "local-whisper"
-version = "1.10.1"
+version = "1.11.1"
 description = "Local macOS dictation with local transcription and grammar cleanup"
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
@@ -40,12 +40,12 @@ dependencies = [
     "misaki[en]>=0.9.4",
     # Kokoro/misaki pull pydantic through spaCy. Pydantic declares the
     # exact pydantic-core ABI wheel it can import safely.
-    "pydantic==2.13.4",
+    "pydantic==2.14.1",
 ]
 
 [project.optional-dependencies]
 apple-intelligence = [
-    "apple-fm-sdk>=0.2.0",
+    "apple-fm-sdk>=0.2.1",
 ]
 
 [project.scripts]
@@ -57,13 +57,26 @@ Repository = "https://github.com/gabrimatic/local-whisper"
 "Bug Tracker" = "https://github.com/gabrimatic/local-whisper/issues"
 Changelog = "https://github.com/gabrimatic/local-whisper/blob/main/CHANGELOG.md"
 
+[dependency-groups]
+dev = [
+    "pytest>=9.0",
+    "ruff>=0.16",
+]
+
+[tool.uv]
+# Local Whisper runs only on Apple Silicon Macs; resolve the lock for that platform.
+environments = ["sys_platform == 'darwin' and platform_machine == 'arm64'"]
+
 [tool.ruff]
 target-version = "py311"
 line-length = 120
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "W"]
-ignore = ["E501"]  # line length handled by formatter
+select = ["E", "F", "I", "W", "UP"]
+ignore = [
+    "E501",  # line length handled by formatter
+    "UP042",  # StrEnum changes str() output of existing enums
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/whisper_voice"]
@@ -73,16 +86,30 @@ include = ["src/whisper_voice/assets/*.png"]
 include = [
     "/src",
     "/README.md",
-    "/docs",
+    "/doc",
+    "/LocalWhisperUI",
+    "/uv.lock",
+    "/CHANGELOG.md",
     "/install.sh",
     "/setup.sh",
     "/src/whisper_voice/assets/*.png",
 ]
 exclude = [
+    "/LocalWhisperUI/.build",
+    "/LocalWhisperUI/.swiftpm",
+    "/doc/export.zip",
     "/src/flutter/**/.dart_tool",
     "/src/flutter/**/build",
     "/src/flutter/**/.gradle",
     "/src/flutter/**/Pods",
+    "/src/flutter/**/.symlinks",
+    "/src/flutter/**/ephemeral",
+    "/src/flutter/**/.flutter-plugins-dependencies",
+    "/src/flutter/**/*.iml",
+    "/src/flutter/**/local.properties",
+    "/src/flutter/**/Generated.xcconfig",
+    "/src/flutter/**/flutter_export_environment.sh",
+    "/src/flutter/**/GeneratedPluginRegistrant.*",
 ]
 
 [tool.pytest.ini_options]

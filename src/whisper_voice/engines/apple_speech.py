@@ -8,7 +8,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any, Optional, Tuple
+from typing import Any
 
 from ..config import get_config
 from ..utils import log
@@ -27,7 +27,7 @@ def apple_speech_helper_candidates() -> tuple[Path, ...]:
     )
 
 
-def find_apple_speech_helper() -> Optional[Path]:
+def find_apple_speech_helper() -> Path | None:
     return next((path for path in apple_speech_helper_candidates() if path.is_file()), None)
 
 
@@ -61,7 +61,7 @@ class AppleSpeechEngine(TranscriptionEngine):
     def supports_long_audio(self) -> bool:
         return True
 
-    def _resolved_helper(self) -> Optional[Path]:
+    def _resolved_helper(self) -> Path | None:
         if self._helper_path is not None:
             return self._helper_path if self._helper_path.is_file() else None
         return find_apple_speech_helper()
@@ -122,7 +122,7 @@ class AppleSpeechEngine(TranscriptionEngine):
     def running(self) -> bool:
         return self._ready and self._resolved_helper() is not None
 
-    def transcribe(self, path: Path) -> Tuple[Optional[str], Optional[str]]:
+    def transcribe(self, path: Path) -> tuple[str | None, str | None]:
         if not path or not path.exists():
             return None, "No audio"
         try:

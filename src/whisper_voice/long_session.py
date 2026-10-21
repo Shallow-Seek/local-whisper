@@ -11,8 +11,8 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable, Optional
 
 from .config import CONFIG_DIR
 from .utils import log
@@ -86,7 +86,7 @@ class SessionLog:
             pass
 
 
-def read_pending_session() -> Optional[dict]:
+def read_pending_session() -> dict | None:
     """Return {started_at, total_chunks, chunks} or None if no session file."""
     if not _SESSION_PATH.exists():
         return None

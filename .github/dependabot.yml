@@ -3,14 +3,32 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns: ["*"]
 
-  - package-ecosystem: "pip"
+  # uv updates the pyproject.toml pin and uv.lock in the same pull request.
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      python:
+        patterns: ["*"]
 
   - package-ecosystem: "pub"
     directory: "/src/flutter/local_whisper"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
+    groups:
+      flutter:
+        patterns: ["*"]
+
+  - package-ecosystem: "gradle"
+    directory: "/src/flutter/local_whisper/android"
+    schedule:
+      interval: "monthly"
+    groups:
+      android:
+        patterns: ["*"]

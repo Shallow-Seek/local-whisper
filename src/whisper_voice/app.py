@@ -12,7 +12,6 @@ import threading
 import time
 import warnings
 from pathlib import Path
-from typing import Optional
 
 from pynput import keyboard
 
@@ -110,28 +109,28 @@ class App(IPCMixin, RecordingMixin, PipelineMixin, CommandsMixin, SwitchingMixin
         self._max_timer = None
         self._last_tap_time = 0.0
         self._key_pressed = False
-        self._hold_timer: Optional[threading.Timer] = None
+        self._hold_timer: threading.Timer | None = None
         self._hold_recording: bool = False
         self._current_status = "Starting..."
         self._keyboard_listener = None
         self._record_key = KEY_MAP.get(self.config.hotkey.key, keyboard.Key.alt_r)
 
-        self._shortcut_processor: Optional[ShortcutProcessor] = None
+        self._shortcut_processor: ShortcutProcessor | None = None
         self._shortcut_processor_grammar = None
         self._rebind_lock = threading.Lock()
-        self._key_interceptor: Optional[KeyInterceptor] = None
-        self._tts_processor: Optional[TTSProcessor] = None
+        self._key_interceptor: KeyInterceptor | None = None
+        self._tts_processor: TTSProcessor | None = None
         self._swift_process = None
 
         self._stop_event = threading.Event()
         self._cleaned_up = False
 
         self._last_model_use: float = time.time()
-        self._idle_timer: Optional[threading.Timer] = None
+        self._idle_timer: threading.Timer | None = None
         self._models_loaded: bool = True
 
-        self._monitor_heartbeat_timer: Optional[threading.Timer] = None
-        self._listener_watchdog_timer: Optional[threading.Timer] = None
+        self._monitor_heartbeat_timer: threading.Timer | None = None
+        self._listener_watchdog_timer: threading.Timer | None = None
         self._download_cancel_lock = threading.Lock()
         self._download_cancel_events: dict[str, threading.Event] = {}
 

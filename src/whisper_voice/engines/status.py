@@ -11,8 +11,8 @@ offers cache removal so users can reclaim gigabytes without leaving the app.
 import math
 import os
 import shutil
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Iterable, Optional
 
 from .qwen3_models import DEFAULT_QWEN3_ASR_MODEL, qwen3_warm_sentinel_name
 
@@ -40,7 +40,7 @@ WHISPERKIT_REQUIRED = (
 
 # Engine id → Hugging Face repo metadata.
 # `hf_repo` is what HuggingFace writes as ``models--<org>--<name>``.
-ENGINE_MODEL_MAP: Dict[str, Dict[str, object]] = {
+ENGINE_MODEL_MAP: dict[str, dict[str, object]] = {
     "parakeet_v3": {
         "hf_repo": "mlx-community/parakeet-tdt-0.6b-v3",
         "warm_sentinel": ".parakeet_v3_warmed",
@@ -56,7 +56,7 @@ ENGINE_MODEL_MAP: Dict[str, Dict[str, object]] = {
 }
 
 
-def _whisperkit_model_dir() -> Optional[Path]:
+def _whisperkit_model_dir() -> Path | None:
     """Directory where whisperkit-cli stores the currently configured model.
 
     Returns None when the config can't be read. The path is deterministic from
@@ -92,7 +92,7 @@ def _whisperkit_complete(model_dir: Path) -> bool:
     return True
 
 
-def _whisperkit_status() -> Dict:
+def _whisperkit_status() -> dict:
     model_dir = _whisperkit_model_dir()
     if model_dir is None:
         return {
@@ -185,7 +185,7 @@ def hf_cache_dir_name(hf_repo: str) -> str:
     return "models--" + hf_repo.replace("/", "--")
 
 
-def _configured_hf_repo(engine_id: str) -> Optional[str]:
+def _configured_hf_repo(engine_id: str) -> str | None:
     try:
         from ..config import get_config
 
@@ -201,8 +201,8 @@ def _configured_hf_repo(engine_id: str) -> Optional[str]:
 
 
 def engine_model_metadata(
-    engine_id: str, hf_repo: Optional[str] = None
-) -> Optional[Dict[str, object]]:
+    engine_id: str, hf_repo: str | None = None
+) -> dict[str, object] | None:
     """Return managed HF model metadata for an engine using current config."""
     info = ENGINE_MODEL_MAP.get(engine_id)
     if info is None:
@@ -223,7 +223,7 @@ def engine_model_metadata(
     }
 
 
-def engine_model_status(engine_id: str, hf_repo: Optional[str] = None) -> Dict:
+def engine_model_status(engine_id: str, hf_repo: str | None = None) -> dict:
     """Return cache status for a single engine.
 
     Keys:
@@ -286,7 +286,7 @@ def engine_model_status(engine_id: str, hf_repo: Optional[str] = None) -> Dict:
     }
 
 
-def ensure_engine_model_cached(engine_id: str, hf_repo: Optional[str] = None) -> None:
+def ensure_engine_model_cached(engine_id: str, hf_repo: str | None = None) -> None:
     """Download a managed engine's HF snapshot if it is missing or partial."""
     info = engine_model_metadata(engine_id, hf_repo=hf_repo)
     if info is None:
@@ -322,7 +322,7 @@ def ensure_engine_model_cached(engine_id: str, hf_repo: Optional[str] = None) ->
         raise RuntimeError(f"{engine_id} model download did not finish cleanly")
 
 
-def mark_engine_model_warmed(engine_id: str, hf_repo: Optional[str] = None) -> bool:
+def mark_engine_model_warmed(engine_id: str, hf_repo: str | None = None) -> bool:
     """Persist that the selected managed model completed runtime warm-up."""
     info = engine_model_metadata(engine_id, hf_repo=hf_repo)
     if info is None:
@@ -335,10 +335,10 @@ def mark_engine_model_warmed(engine_id: str, hf_repo: Optional[str] = None) -> b
         return False
 
 
-def all_engine_statuses(active_id: Optional[str]) -> Dict[str, Dict]:
+def all_engine_statuses(active_id: str | None) -> dict[str, dict]:
     """Return a mapping of engine_id → status dict, including `active` flag."""
     from . import ENGINE_REGISTRY
-    out: Dict[str, Dict] = {}
+    out: dict[str, dict] = {}
     for engine_id, info in ENGINE_REGISTRY.items():
         status = engine_model_status(engine_id)
         status["id"] = engine_id

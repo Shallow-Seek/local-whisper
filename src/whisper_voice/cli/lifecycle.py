@@ -9,7 +9,6 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Optional
 
 from whisper_voice.config import _find_in_section, _replace_in_section
 
@@ -44,7 +43,7 @@ def _is_running() -> tuple:
         return True, _find_pid()
 
 
-def _find_pid() -> Optional[int]:
+def _find_pid() -> int | None:
     """Return the service PID, or None. Matches only `wh _run` so sibling
     CLI invocations (e.g. a concurrent `wh status`) are never mistaken
     for the long-lived service."""
@@ -124,7 +123,7 @@ def _get_config_path() -> Path:
     return Path.home() / ".whisper" / "config.toml"
 
 
-def _read_config_backend() -> Optional[str]:
+def _read_config_backend() -> str | None:
     config_file = _get_config_path()
     if not config_file.exists():
         return None
@@ -136,7 +135,7 @@ def _read_config_backend() -> Optional[str]:
     return None
 
 
-def _read_config_backend_status() -> Optional[str]:
+def _read_config_backend_status() -> str | None:
     """Read the grammar backend for status output, respecting the enabled flag."""
     config_file = _get_config_path()
     if not config_file.exists():
@@ -186,7 +185,7 @@ def _list_backends() -> dict:
         return {}
 
 
-def _read_config_engine() -> Optional[str]:
+def _read_config_engine() -> str | None:
     """Read the current transcription engine from config.toml."""
     config_file = _get_config_path()
     if not config_file.exists():
@@ -257,7 +256,7 @@ def cmd_status():
         print(f"  {C_YELLOW}pending:{C_RESET} {pending}")
 
 
-def _process_uptime(pid: int) -> Optional[float]:
+def _process_uptime(pid: int) -> float | None:
     """Return wall-clock uptime in seconds for the given pid, or None."""
     try:
         out = subprocess.run(
@@ -274,7 +273,7 @@ def _process_uptime(pid: int) -> Optional[float]:
         return None
 
 
-def _parse_etime(etime: str) -> Optional[float]:
+def _parse_etime(etime: str) -> float | None:
     """Parse ps etime `[[DD-]hh:]mm:ss` into seconds."""
     days = 0
     if "-" in etime:
@@ -306,7 +305,7 @@ def _format_uptime(seconds: float) -> str:
     return f"{seconds / 86400:.1f}d"
 
 
-def _process_rss_mb(pid: int) -> Optional[float]:
+def _process_rss_mb(pid: int) -> float | None:
     """Return RSS in megabytes for the given pid, or None on error."""
     try:
         out = subprocess.run(
@@ -323,7 +322,7 @@ def _process_rss_mb(pid: int) -> Optional[float]:
         return None
 
 
-def _pending_work_summary() -> Optional[str]:
+def _pending_work_summary() -> str | None:
     """Report interrupted pipelines waiting to be recovered on next boot."""
     home = Path.home() / ".whisper"
     parts = []

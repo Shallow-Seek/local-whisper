@@ -15,8 +15,8 @@ Usage:
         text, error = engine.transcribe(path)
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable, Dict, FrozenSet, List, Optional, Tuple
 
 from .base import EngineCapability, TranscriptionEngine
 
@@ -28,7 +28,7 @@ class EngineInfo:
     name: str                            # Display name (e.g., "WhisperKit")
     description: str                     # Short description for menu
     factory: Callable[[], TranscriptionEngine]  # Function to create instance
-    capabilities: FrozenSet[EngineCapability] = frozenset()
+    capabilities: frozenset[EngineCapability] = frozenset()
 
 
 def _create_parakeet() -> TranscriptionEngine:
@@ -54,7 +54,7 @@ def _create_apple_speech() -> TranscriptionEngine:
 # ============================================================================
 # ENGINE REGISTRY - Add new engines here
 # ============================================================================
-ENGINE_REGISTRY: Dict[str, EngineInfo] = {
+ENGINE_REGISTRY: dict[str, EngineInfo] = {
     "parakeet_v3": EngineInfo(
         id="parakeet_v3",
         name="Parakeet-TDT v3",
@@ -103,12 +103,12 @@ def create_engine(engine_id: str) -> TranscriptionEngine:
     return ENGINE_REGISTRY[engine_id].factory()
 
 
-def get_engine_info(engine_id: str) -> Optional[EngineInfo]:
+def get_engine_info(engine_id: str) -> EngineInfo | None:
     """Get metadata for an engine type."""
     return ENGINE_REGISTRY.get(engine_id)
 
 
-def get_engine_choices() -> List[Tuple[str, str]]:
+def get_engine_choices() -> list[tuple[str, str]]:
     """Return [(id, name), ...] for all registered engines, for use in UI."""
     return [(info.id, info.name) for info in ENGINE_REGISTRY.values()]
 

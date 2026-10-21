@@ -9,8 +9,8 @@ import socket
 import subprocess
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from whisper_voice.ui_bundle import preferred_ui_binary
 
@@ -55,7 +55,7 @@ def _doctor_fixing(msg: str):
     print(f"      {C_CYAN}→ {msg}{C_RESET}")
 
 
-def _get_macos_major() -> Optional[int]:
+def _get_macos_major() -> int | None:
     """Return the major macOS version number, or None."""
     try:
         result = subprocess.run(["sw_vers", "-productVersion"], capture_output=True, text=True)
@@ -64,7 +64,7 @@ def _get_macos_major() -> Optional[int]:
         return None
 
 
-def _get_venv_python() -> Optional[str]:
+def _get_venv_python() -> str | None:
     """Return the python interpreter for this installation."""
     if get_install_method() == INSTALL_BREW:
         return sys.executable
@@ -617,8 +617,8 @@ def cmd_doctor(args: list):
 
 
 def cmd_update(
-    status_callback: Optional[Callable[[str, str], None]] = None,
-    restart_callback: Optional[Callable[[], None]] = None,
+    status_callback: Callable[[str, str], None] | None = None,
+    restart_callback: Callable[[], None] | None = None,
     wait_after_restart: bool = True,
 ) -> bool:
     """Pull latest code, update dependencies, check model, rebuild Swift, and restart."""

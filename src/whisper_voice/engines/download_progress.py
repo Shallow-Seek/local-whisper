@@ -19,18 +19,18 @@ with aggregate downloaded bytes when a size preflight is unavailable or skipped.
 """
 
 import threading
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Dict, Optional
 
 from .status import _dir_size_bytes
 
 POLL_INTERVAL_SEC = 0.5
 
-_SIZE_CACHE: Dict[str, Optional[int]] = {}
+_SIZE_CACHE: dict[str, int | None] = {}
 _SIZE_CACHE_LOCK = threading.Lock()
 
 
-def expected_size_bytes(hf_repo: str) -> Optional[int]:
+def expected_size_bytes(hf_repo: str) -> int | None:
     """Sum file sizes for a HuggingFace repo. Cached per-session.
 
     Returns None on any failure (offline, rate-limited, unknown repo). The
@@ -40,7 +40,7 @@ def expected_size_bytes(hf_repo: str) -> Optional[int]:
     with _SIZE_CACHE_LOCK:
         if hf_repo in _SIZE_CACHE:
             return _SIZE_CACHE[hf_repo]
-    total: Optional[int]
+    total: int | None
     try:
         from huggingface_hub import model_info
         # Bounded: this preflight runs on the engine-switch thread before the
@@ -85,7 +85,7 @@ class DownloadWatcher:
         self,
         target_id: str,
         cache_path: Path,
-        total_bytes: Optional[int],
+        total_bytes: int | None,
         ipc_send: Callable[[dict], None],
     ):
         self._target_id = target_id
@@ -94,7 +94,7 @@ class DownloadWatcher:
         self._ipc_send = ipc_send
         self._phase = "preparing"
         self._stop = threading.Event()
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> None:
         if self._thread is not None:
@@ -109,7 +109,7 @@ class DownloadWatcher:
         self._phase = phase
         self._emit()
 
-    def finish(self, error: Optional[str] = None, phase: Optional[str] = None) -> None:
+    def finish(self, error: str | None = None, phase: str | None = None) -> None:
         if phase is not None:
             self._phase = phase
         elif error is not None:
@@ -122,7 +122,7 @@ class DownloadWatcher:
             self._thread = None
         self._emit(error=error)
 
-    def _emit(self, error: Optional[str] = None) -> None:
+    def _emit(self, error: str | None = None) -> None:
         bytes_now = _safe_size(self._cache_path)
         if self._total > 0:
             percent = min(1.0, bytes_now / self._total)

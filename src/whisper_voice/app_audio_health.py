@@ -5,14 +5,13 @@
 from __future__ import annotations
 
 import threading
-from typing import Optional
 
 from .utils import log
 
 
 class AudioHealthMixin:
     _MONITOR_HEARTBEAT_SECONDS = 60
-    _monitor_heartbeat_timer: Optional[threading.Timer]
+    _monitor_heartbeat_timer: threading.Timer | None
 
     def _schedule_monitor_heartbeat(self):
         if self._monitor_heartbeat_timer:

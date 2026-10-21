@@ -16,7 +16,7 @@ Usage:
 """
 
 import threading
-from typing import Callable, Dict, FrozenSet, List, Optional, Set, Tuple
+from collections.abc import Callable
 
 from Quartz import (
     CFMachPortCreateRunLoopSource,
@@ -86,23 +86,23 @@ class KeyInterceptor:
     def __init__(self):
         # key -> list of (required_modifiers, callback). Multiple bindings can
         # share a key as long as their modifier sets differ; matching is exact.
-        self._shortcuts: Dict[str, List[Tuple[FrozenSet[str], Callable]]] = {}
-        self._enabled_guard: Optional[Callable[[], bool]] = None
+        self._shortcuts: dict[str, list[tuple[frozenset[str], Callable]]] = {}
+        self._enabled_guard: Callable[[], bool] | None = None
         self._run_loop = None
         self._tap = None
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._running = False
         self._lock = threading.Lock()
         self._recording_active = False
-        self._recording_handler: Optional[Callable] = None
+        self._recording_handler: Callable | None = None
         self._speaking_active = False
-        self._speaking_handler: Optional[Callable] = None
-        self._record_keycode: Optional[int] = None
+        self._speaking_handler: Callable | None = None
+        self._record_keycode: int | None = None
         # Set once the tap thread reaches its run loop (or fails), so stop()
         # can synchronize with a start() still in flight.
         self._started_event = threading.Event()
 
-    def register_shortcut(self, modifiers: Set[str], key: str, callback: Callable):
+    def register_shortcut(self, modifiers: set[str], key: str, callback: Callable):
         """
         Register a shortcut to intercept. A binding with the same key and the
         same modifier set replaces the previous one; a different modifier set
@@ -119,7 +119,7 @@ class KeyInterceptor:
             bindings[:] = [(mods, cb) for mods, cb in bindings if mods != combo]
             bindings.append((combo, callback))
 
-    def unregister_shortcut(self, key: str, modifiers: Optional[Set[str]] = None):
+    def unregister_shortcut(self, key: str, modifiers: set[str] | None = None):
         """Remove binding(s) for a key. With modifiers, remove only that combo;
         without, remove every binding on the key. No-op if not registered."""
         with self._lock:
@@ -139,7 +139,7 @@ class KeyInterceptor:
         with self._lock:
             self._shortcuts.clear()
 
-    def set_record_keycode(self, keycode: Optional[int]):
+    def set_record_keycode(self, keycode: int | None):
         """Set the keycode of a non-modifier recording trigger (e.g. an F-key).
 
         While set, that key is always suppressed so pressing the dictation

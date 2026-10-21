@@ -143,11 +143,11 @@ struct ToggleRow: View {
     let title: String
     var subtitle: String? = nil
     let isOn: Bool
-    let onChange: (Bool) -> Void
+    let onChange: @MainActor @Sendable (Bool) -> Void
 
     var body: some View {
         SettingRow(title: title, subtitle: subtitle) {
-            Toggle(title, isOn: Binding(get: { isOn }, set: onChange))
+            Toggle(title, isOn: Binding(get: { isOn }, set: { onChange($0) }))
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .labelsHidden()

@@ -12,9 +12,9 @@ import select
 import socket
 import threading
 import time
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Callable, Optional
 
 from .utils import log
 
@@ -28,12 +28,12 @@ class IPCServer:
     """Unix domain socket server. Accepts one client at a time."""
 
     def __init__(self):
-        self._client: Optional[socket.socket] = None
+        self._client: socket.socket | None = None
         self._client_lock = threading.Lock()
         self._send_lock = threading.Lock()
-        self._message_handler: Optional[Callable[[dict], None]] = None
-        self._on_connect: Optional[Callable[[], None]] = None
-        self._server: Optional[socket.socket] = None
+        self._message_handler: Callable[[dict], None] | None = None
+        self._on_connect: Callable[[], None] | None = None
+        self._server: socket.socket | None = None
         self._running = False
         # ONE worker: client messages must commit in arrival order. With four
         # workers, rapid same-key config updates (slider drags) and the

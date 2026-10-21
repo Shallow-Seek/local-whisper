@@ -9,6 +9,8 @@ import tomllib
 from importlib import metadata
 from pathlib import Path
 
+from packaging.requirements import Requirement
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -199,7 +201,9 @@ def test_github_pages_auto_deploys_mintlify_doc_updates():
     assert "runs-on: ubuntu-latest" in workflow
     assert "pages: write" in workflow
     assert "id-token: write" in workflow
-    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true" in workflow
+    assert "FORCE_JAVASCRIPT_ACTIONS_TO_NODE24" not in workflow
+    assert "pull_request:" in workflow
+    assert "if: github.event_name != 'pull_request'" in workflow
     assert "cancel-in-progress: true" in workflow
     assert "cp ../install.sh ../_site/install.sh" in workflow
     assert "Deploy GitHub Pages" in workflow
@@ -213,10 +217,13 @@ def test_general_ci_does_not_run_expensive_jobs_for_docs_only_changes():
     assert '      - "doc/**"' in workflow
     assert '      - "README.md"' in workflow
     assert '      - ".github/workflows/docs-pages.yml"' in workflow
-    assert "group: ci-${{ github.ref }}" in workflow
+    assert "group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}" in workflow
     assert "cancel-in-progress: true" in workflow
     assert "setup.sh syntax check" in workflow
     assert "runs-on: ubuntu-latest" in workflow
+    assert "mint " not in workflow
+    assert "needs.changes.outputs.swift == 'true'" in workflow
+    assert "needs.changes.outputs.flutter == 'true'" in workflow
 
 
 def test_configuration_reference_matches_generated_default_config():
@@ -246,8 +253,12 @@ def test_github_actions_use_current_node24_ready_actions():
     assert "uses: actions/checkout@v7" in workflow
     assert "uses: actions/checkout@v7" in pages_workflow
     assert "uses: actions/checkout@v6" not in combined_workflows
-    assert "uses: actions/setup-python@v6" in workflow
+    assert "uses: actions/setup-python@v7" in workflow
+    assert "uses: actions/setup-node@v7" in pages_workflow
+    assert "uses: dorny/paths-filter@v4" in workflow
     assert 'package-ecosystem: "github-actions"' in dependabot
+    assert dependabot.count('interval: "monthly"') == dependabot.count("package-ecosystem:")
+    assert dependabot.count("groups:") == dependabot.count("package-ecosystem:")
 
 
 def test_ci_runs_flutter_static_and_widget_gates():
@@ -260,6 +271,14 @@ def test_ci_runs_flutter_static_and_widget_gates():
     assert "flutter test" in workflow
     assert 'package-ecosystem: "pub"' in dependabot
     assert 'directory: "/src/flutter/local_whisper"' in dependabot
+
+
+def test_android_release_manifest_allows_model_downloads():
+    """Release APKs merge only the main manifest, so it must declare network access for model packs."""
+    manifest = _read("src/flutter/local_whisper/android/app/src/main/AndroidManifest.xml")
+
+    assert '<uses-permission android:name="android.permission.INTERNET" />' in manifest
+    assert '<uses-permission android:name="android.permission.RECORD_AUDIO" />' in manifest
 
 
 def test_android_keyboard_honors_quick_insert_setting():
@@ -278,10 +297,14 @@ def test_pydantic_core_pin_matches_pydantic_runtime_requirement():
     """The packaged Kokoro path must not ship mismatched pydantic-core wheels."""
     pyproject = tomllib.loads(_read("pyproject.toml"))
     dependencies = set(pyproject["project"]["dependencies"])
-    pydantic_requires = {requirement.split(";", maxsplit=1)[0].strip() for requirement in metadata.requires("pydantic") or []}
+    pydantic_requirement = next(Requirement(value) for value in dependencies if value.startswith("pydantic=="))
+    core_requirement = next(
+        Requirement(value) for value in metadata.requires("pydantic") or []
+        if Requirement(value).name == "pydantic-core"
+    )
 
     assert "pyobjc-framework-AVFoundation>=12.2" in dependencies
     assert "pyobjc-framework-ApplicationServices>=12.2" in dependencies
-    assert "pydantic==2.13.4" in dependencies
+    assert metadata.version("pydantic") in pydantic_requirement.specifier
     assert not any(dependency.startswith("pydantic-core==") for dependency in dependencies)
-    assert "pydantic-core==2.46.4" in pydantic_requires
+    assert metadata.version("pydantic-core") in core_requirement.specifier
