@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'dart:isolate';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 
@@ -97,7 +98,6 @@ NativeSpeechResult _transcribeWithSherpa({
   sherpa.initBindings();
   final config = _recognizerConfig(model: model, modelPath: modelPath);
   final recognizer = sherpa.OfflineRecognizer(config);
-  final stream = recognizer.createStream();
   final startedAt = DateTime.now();
   try {
     final wave = sherpa.readWave(audioPath);
@@ -106,10 +106,27 @@ NativeSpeechResult _transcribeWithSherpa({
         'Recorded audio could not be read as WAV.',
       );
     }
-    stream.acceptWaveform(samples: wave.samples, sampleRate: wave.sampleRate);
-    recognizer.decode(stream);
-    final result = recognizer.getResult(stream);
-    final text = result.text.trim();
+    // Qwen3-ASR fits the prompt, the audio, and its answer into a 512-token
+    // window. Past ~20 seconds the audio fills it and the answer is cut off
+    // after its first word ("language"), so transcribe long recordings in
+    // pieces split at pauses.
+    final segments = model == 'qwen3_asr_sherpa'
+        ? _splitAtPauses(wave.samples, wave.sampleRate)
+        : [wave.samples];
+    var text = '';
+    var lang = '';
+    for (final segment in segments) {
+      final stream = recognizer.createStream();
+      try {
+        stream.acceptWaveform(samples: segment, sampleRate: wave.sampleRate);
+        recognizer.decode(stream);
+        final result = recognizer.getResult(stream);
+        text = _joinTranscripts(text, result.text.trim());
+        if (lang.isEmpty) lang = result.lang;
+      } finally {
+        stream.free();
+      }
+    }
     if (text.isEmpty) {
       throw const LocalWhisperException('No speech was detected.');
     }
@@ -118,7 +135,7 @@ NativeSpeechResult _transcribeWithSherpa({
       transcript: text,
       rawTranscript: text,
       duration: duration,
-      localeId: result.lang.isNotEmpty ? result.lang : locale,
+      localeId: lang.isNotEmpty ? lang : locale,
       onDevice: true,
       engine: 'sherpa_onnx',
       modelId: model,
@@ -126,9 +143,53 @@ NativeSpeechResult _transcribeWithSherpa({
       rtf: duration > 0 ? elapsed.inMilliseconds / 1000 / duration : null,
     );
   } finally {
-    stream.free();
     recognizer.free();
   }
+}
+
+/// Splits [samples] into pieces of at most 12 seconds, cutting each at the
+/// quietest 100 ms between 7 seconds and its end so words stay whole. The
+/// last piece is kept at least 2 seconds long.
+List<Float32List> _splitAtPauses(Float32List samples, int sampleRate) {
+  final maxLength = sampleRate * 12;
+  final minLength = sampleRate * 7;
+  final minTail = sampleRate * 2;
+  final frame = sampleRate ~/ 10;
+  final pieces = <Float32List>[];
+  var start = 0;
+  while (samples.length - start > maxLength) {
+    final searchEnd = math.min(start + maxLength, samples.length - minTail);
+    var cut = searchEnd;
+    var quietest = double.infinity;
+    for (var f = start + minLength; f + frame <= searchEnd; f += frame ~/ 2) {
+      var energy = 0.0;
+      for (var i = f; i < f + frame; i++) {
+        energy += samples[i] * samples[i];
+      }
+      if (energy < quietest) {
+        quietest = energy;
+        cut = f + frame ~/ 2;
+      }
+    }
+    pieces.add(Float32List.sublistView(samples, start, cut));
+    start = cut;
+  }
+  pieces.add(Float32List.sublistView(samples, start));
+  return pieces;
+}
+
+/// Joins transcript pieces with a space, except between two CJK characters,
+/// which are written without one.
+String _joinTranscripts(String before, String next) {
+  if (before.isEmpty) return next;
+  if (next.isEmpty) return before;
+  bool isCjk(int rune) =>
+      (rune >= 0x3000 && rune <= 0x9FFF) ||
+      (rune >= 0xAC00 && rune <= 0xD7AF) ||
+      (rune >= 0xF900 && rune <= 0xFAFF) ||
+      (rune >= 0xFF00 && rune <= 0xFFEF);
+  final joinTight = isCjk(before.runes.last) && isCjk(next.runes.first);
+  return joinTight ? '$before$next' : '$before $next';
 }
 
 sherpa.OfflineRecognizerConfig _recognizerConfig({
